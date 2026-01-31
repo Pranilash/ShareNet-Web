@@ -1,0 +1,81 @@
+import { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { Input, Button, Card } from '../components/ui';
+import useAuthStore from '../stores/authStore';
+
+export default function Login() {
+    const [formData, setFormData] = useState({ email: '', password: '' });
+    const [isLoading, setIsLoading] = useState(false);
+    const { login } = useAuthStore();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const from = location.state?.from?.pathname || '/items';
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+
+        try {
+            await login(formData);
+            toast.success('Welcome back!');
+            navigate(from, { replace: true });
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Login failed');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-[80vh] flex items-center justify-center">
+            <Card className="w-full max-w-md p-8">
+                <div className="text-center mb-8">
+                    <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <span className="text-white text-2xl font-bold">S</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
+                    <p className="text-gray-500 mt-2">Sign in to your ShareNet account</p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <Input
+                        label="Email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="your.email@campus.edu"
+                        required
+                    />
+
+                    <Input
+                        label="Password"
+                        name="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Enter your password"
+                        required
+                    />
+
+                    <Button type="submit" loading={isLoading} className="w-full">
+                        Sign In
+                    </Button>
+                </form>
+
+                <p className="text-center text-gray-500 mt-6">
+                    Don't have an account?{' '}
+                    <Link to="/register" className="text-blue-600 hover:underline font-medium">
+                        Sign up
+                    </Link>
+                </p>
+            </Card>
+        </div>
+    );
+}
