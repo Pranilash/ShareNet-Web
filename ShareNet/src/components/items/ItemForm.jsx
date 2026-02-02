@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Input, Select, Button } from '../ui';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Zap, Shield, Clock, MapPin } from 'lucide-react';
 
 const categories = [
     { value: 'Electronics', label: 'Electronics' },
@@ -18,6 +18,22 @@ const modes = [
     { value: 'GIVE', label: 'Give Away (Free)' },
 ];
 
+const conditions = [
+    { value: 'NEW', label: 'New - Never used' },
+    { value: 'LIKE_NEW', label: 'Like New - Barely used' },
+    { value: 'GOOD', label: 'Good - Minor wear' },
+    { value: 'FAIR', label: 'Fair - Visible wear' },
+    { value: 'POOR', label: 'Poor - Heavy wear' },
+];
+
+const availabilityOptions = [
+    { value: 'weekdays', label: 'Weekdays (9am-6pm)' },
+    { value: 'weekends', label: 'Weekends only' },
+    { value: 'evenings', label: 'Evenings (6pm-9pm)' },
+    { value: 'flexible', label: 'Flexible' },
+    { value: 'custom', label: 'Custom (specify below)' },
+];
+
 export default function ItemForm({ initialData, onSubmit, isLoading }) {
     const [formData, setFormData] = useState({
         title: initialData?.title || '',
@@ -25,13 +41,25 @@ export default function ItemForm({ initialData, onSubmit, isLoading }) {
         category: initialData?.category || '',
         mode: initialData?.mode || '',
         price: initialData?.price || '',
+        condition: initialData?.condition || '',
+        instantClaim: initialData?.instantClaim || false,
+        maxClaimers: initialData?.maxClaimers || 1,
+        minRentalDays: initialData?.minRentalDays || '',
+        maxRentalDays: initialData?.maxRentalDays || '',
+        depositRequired: initialData?.depositRequired || false,
+        depositAmount: initialData?.depositAmount || '',
+        pickupLocation: initialData?.pickupLocation || '',
+        availabilitySchedule: initialData?.availabilitySchedule || '',
     });
     const [photos, setPhotos] = useState([]);
     const [previews, setPreviews] = useState(initialData?.photos || []);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({ 
+            ...prev, 
+            [name]: type === 'checkbox' ? checked : value 
+        }));
     };
 
     const handleFileChange = (e) => {
@@ -56,7 +84,9 @@ export default function ItemForm({ initialData, onSubmit, isLoading }) {
         e.preventDefault();
         const data = new FormData();
         Object.entries(formData).forEach(([key, value]) => {
-            if (value) data.append(key, value);
+            if (value !== '' && value !== null && value !== undefined) {
+                data.append(key, value);
+            }
         });
         photos.forEach(photo => {
             data.append('photos', photo);
@@ -90,7 +120,7 @@ export default function ItemForm({ initialData, onSubmit, isLoading }) {
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
                     label="Category"
                     name="category"
@@ -101,6 +131,18 @@ export default function ItemForm({ initialData, onSubmit, isLoading }) {
                     required
                 />
 
+                <Select
+                    label="Condition"
+                    name="condition"
+                    value={formData.condition}
+                    onChange={handleChange}
+                    options={conditions}
+                    placeholder="Select condition"
+                    required
+                />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
                     label="Mode"
                     name="mode"
@@ -123,6 +165,129 @@ export default function ItemForm({ initialData, onSubmit, isLoading }) {
                         required={formData.mode !== 'GIVE'}
                     />
                 )}
+            </div>
+
+            {/* Free item options */}
+            {formData.mode === 'GIVE' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-4">
+                    <h4 className="font-medium text-green-800 flex items-center gap-2">
+                        <Zap size={16} />
+                        Free Item Options
+                    </h4>
+                    
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            name="instantClaim"
+                            checked={formData.instantClaim}
+                            onChange={handleChange}
+                            className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        />
+                        <div>
+                            <span className="font-medium text-gray-900">Enable Instant Claim</span>
+                            <p className="text-sm text-gray-500">First come, first serve - no approval needed</p>
+                        </div>
+                    </label>
+
+                    {formData.instantClaim && (
+                        <Input
+                            label="Maximum Claimers"
+                            name="maxClaimers"
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={formData.maxClaimers}
+                            onChange={handleChange}
+                            helperText="How many people can claim this item?"
+                        />
+                    )}
+                </div>
+            )}
+
+            {/* Rental options */}
+            {formData.mode === 'RENT' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-4">
+                    <h4 className="font-medium text-blue-800 flex items-center gap-2">
+                        <Clock size={16} />
+                        Rental Options
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                            label="Minimum Days"
+                            name="minRentalDays"
+                            type="number"
+                            min="1"
+                            value={formData.minRentalDays}
+                            onChange={handleChange}
+                            placeholder="1"
+                        />
+                        <Input
+                            label="Maximum Days"
+                            name="maxRentalDays"
+                            type="number"
+                            min={formData.minRentalDays || 1}
+                            value={formData.maxRentalDays}
+                            onChange={handleChange}
+                            placeholder="30"
+                        />
+                    </div>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            name="depositRequired"
+                            checked={formData.depositRequired}
+                            onChange={handleChange}
+                            className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div>
+                            <span className="font-medium text-gray-900 flex items-center gap-1">
+                                <Shield size={14} />
+                                Require Deposit
+                            </span>
+                            <p className="text-sm text-gray-500">Collect a refundable security deposit</p>
+                        </div>
+                    </label>
+
+                    {formData.depositRequired && (
+                        <Input
+                            label="Deposit Amount ($)"
+                            name="depositAmount"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={formData.depositAmount}
+                            onChange={handleChange}
+                            required={formData.depositRequired}
+                        />
+                    )}
+                </div>
+            )}
+
+            {/* Pickup Location */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+                <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                    <MapPin size={16} />
+                    Pickup Details
+                </h4>
+                
+                <Input
+                    label="Pickup Location"
+                    name="pickupLocation"
+                    value={formData.pickupLocation}
+                    onChange={handleChange}
+                    placeholder="e.g., Downtown Library, 123 Main St"
+                />
+
+                <Select
+                    label="Availability Schedule"
+                    name="availabilitySchedule"
+                    value={formData.availabilitySchedule}
+                    onChange={handleChange}
+                    options={availabilityOptions}
+                    placeholder="When can people pick this up?"
+                />
             </div>
 
             <div>

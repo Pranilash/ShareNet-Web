@@ -18,7 +18,16 @@ import Transactions from './pages/Transactions';
 import TransactionDetail from './pages/TransactionDetail';
 import Requests from './pages/Requests';
 import Notifications from './pages/Notifications';
-import LostFound from './pages/LostFound';
+import LostFoundIndex from './pages/LostFound/index';
+import LostFoundDetail from './pages/LostFound/LostFoundDetail';
+import MyClaims from './pages/LostFound/MyClaims';
+import ClaimChat from './pages/LostFound/ClaimChat';
+import CreateLostFoundPost from './pages/LostFound/CreateLostFoundPost';
+import WantedItemsIndex from './pages/WantedItems/index';
+import WantedItemDetail from './pages/WantedItems/WantedItemDetail';
+import CreateWantedItem from './pages/WantedItems/CreateWantedItem';
+import MyOffers from './pages/WantedItems/MyOffers';
+import OfferChat from './pages/WantedItems/OfferChat';
 
 function App() {
     const { checkAuth, isAuthenticated } = useAuthStore();
@@ -72,7 +81,39 @@ function App() {
                         <ProtectedRoute><Notifications /></ProtectedRoute>
                     } />
                     <Route path="/lost-found" element={
-                        <ProtectedRoute><LostFound /></ProtectedRoute>
+                        <ProtectedRoute><LostFoundIndex /></ProtectedRoute>
+                    } />
+                    <Route path="/lost-found/create" element={
+                        <ProtectedRoute><CreateLostFoundPost /></ProtectedRoute>
+                    } />
+                    <Route path="/lost-found/claims" element={
+                        <ProtectedRoute><MyClaims /></ProtectedRoute>
+                    } />
+                    <Route path="/lost-found/chat" element={
+                        <ProtectedRoute><ClaimChat /></ProtectedRoute>
+                    } />
+                    <Route path="/lost-found/chat/:claimId" element={
+                        <ProtectedRoute><ClaimChat /></ProtectedRoute>
+                    } />
+                    <Route path="/lost-found/:id" element={
+                        <ProtectedRoute><LostFoundDetail /></ProtectedRoute>
+                    } />
+
+                    {/* Wanted Items Routes */}
+                    <Route path="/wanted" element={
+                        <ProtectedRoute><WantedItemsIndex /></ProtectedRoute>
+                    } />
+                    <Route path="/wanted/create" element={
+                        <ProtectedRoute><CreateWantedItem /></ProtectedRoute>
+                    } />
+                    <Route path="/wanted/my-offers" element={
+                        <ProtectedRoute><MyOffers /></ProtectedRoute>
+                    } />
+                    <Route path="/wanted/chat/:offerId" element={
+                        <ProtectedRoute><OfferChat /></ProtectedRoute>
+                    } />
+                    <Route path="/wanted/:id" element={
+                        <ProtectedRoute><WantedItemDetail /></ProtectedRoute>
                     } />
 
                     {/* Catch all */}

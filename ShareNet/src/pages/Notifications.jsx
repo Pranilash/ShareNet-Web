@@ -2,29 +2,70 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, Button, Loader } from '../components/ui';
-import { Bell, Check, MessageSquare, Package, AlertTriangle, Clock } from 'lucide-react';
+import { 
+    Bell, Check, MessageSquare, Package, AlertTriangle, Clock,
+    Search, Gift, Heart, MapPin, XCircle, CheckCircle
+} from 'lucide-react';
 import useNotificationStore from '../stores/notificationStore';
 
 const typeIcons = {
+    // Transaction notifications
     REQUEST_RECEIVED: Package,
     REQUEST_ACCEPTED: Check,
+    REQUEST_REJECTED: XCircle,
     AGREEMENT_PROPOSED: MessageSquare,
-    AGREEMENT_ACCEPTED: Check,
+    AGREEMENT_CONFIRMED: Check,
+    RETURN_PENDING: Clock,
+    TRANSACTION_COMPLETED: CheckCircle,
+    DISPUTE_RAISED: AlertTriangle,
+    NEW_MESSAGE: MessageSquare,
     REMINDER: Clock,
     OVERDUE: AlertTriangle,
-    RETURN_CONFIRMED: Check,
-    DISPUTE: AlertTriangle
+    // Lost & Found notifications
+    LOST_FOUND_CLAIM: Search,
+    LOST_FOUND_VERIFICATION: Search,
+    LOST_FOUND_VERIFIED: CheckCircle,
+    LOST_FOUND_REJECTED: XCircle,
+    LOST_FOUND_MEETUP: MapPin,
+    LOST_FOUND_MEETUP_ACCEPTED: CheckCircle,
+    LOST_FOUND_RESOLVED: CheckCircle,
+    LOST_FOUND_MESSAGE: MessageSquare,
+    // Wanted Items notifications
+    WANTED_OFFER_RECEIVED: Gift,
+    WANTED_OFFER_ACCEPTED: CheckCircle,
+    WANTED_OFFER_REJECTED: XCircle,
+    WANTED_OFFER_MESSAGE: MessageSquare,
+    WANTED_FULFILLED: Heart
 };
 
 const typeColors = {
+    // Transaction notifications
     REQUEST_RECEIVED: 'bg-blue-100 text-blue-600',
     REQUEST_ACCEPTED: 'bg-green-100 text-green-600',
+    REQUEST_REJECTED: 'bg-red-100 text-red-600',
     AGREEMENT_PROPOSED: 'bg-yellow-100 text-yellow-600',
-    AGREEMENT_ACCEPTED: 'bg-green-100 text-green-600',
+    AGREEMENT_CONFIRMED: 'bg-green-100 text-green-600',
+    RETURN_PENDING: 'bg-orange-100 text-orange-600',
+    TRANSACTION_COMPLETED: 'bg-green-100 text-green-600',
+    DISPUTE_RAISED: 'bg-red-100 text-red-600',
+    NEW_MESSAGE: 'bg-blue-100 text-blue-600',
     REMINDER: 'bg-orange-100 text-orange-600',
     OVERDUE: 'bg-red-100 text-red-600',
-    RETURN_CONFIRMED: 'bg-green-100 text-green-600',
-    DISPUTE: 'bg-red-100 text-red-600'
+    // Lost & Found notifications
+    LOST_FOUND_CLAIM: 'bg-purple-100 text-purple-600',
+    LOST_FOUND_VERIFICATION: 'bg-blue-100 text-blue-600',
+    LOST_FOUND_VERIFIED: 'bg-green-100 text-green-600',
+    LOST_FOUND_REJECTED: 'bg-red-100 text-red-600',
+    LOST_FOUND_MEETUP: 'bg-indigo-100 text-indigo-600',
+    LOST_FOUND_MEETUP_ACCEPTED: 'bg-green-100 text-green-600',
+    LOST_FOUND_RESOLVED: 'bg-green-100 text-green-600',
+    LOST_FOUND_MESSAGE: 'bg-blue-100 text-blue-600',
+    // Wanted Items notifications
+    WANTED_OFFER_RECEIVED: 'bg-purple-100 text-purple-600',
+    WANTED_OFFER_ACCEPTED: 'bg-green-100 text-green-600',
+    WANTED_OFFER_REJECTED: 'bg-red-100 text-red-600',
+    WANTED_OFFER_MESSAGE: 'bg-blue-100 text-blue-600',
+    WANTED_FULFILLED: 'bg-green-100 text-green-600'
 };
 
 export default function Notifications() {
@@ -39,8 +80,55 @@ export default function Notifications() {
         if (!notification.isRead) {
             await markAsRead(notification._id);
         }
+        
+        // Determine redirect based on notification type
+        const type = notification.type;
+        
+        // Transaction-related notifications
         if (notification.relatedTransaction) {
             navigate(`/transactions/${notification.relatedTransaction}`);
+            return;
+        }
+        
+        // Request-related notifications
+        if (notification.relatedRequest) {
+            navigate('/requests');
+            return;
+        }
+        
+        // Lost & Found notifications
+        if (type?.startsWith('LOST_FOUND_')) {
+            if (notification.relatedClaim) {
+                // For claim-related notifications, go to chat or claims page
+                if (type === 'LOST_FOUND_VERIFIED' || type === 'LOST_FOUND_MESSAGE' || 
+                    type === 'LOST_FOUND_MEETUP' || type === 'LOST_FOUND_MEETUP_ACCEPTED') {
+                    navigate(`/lost-found/chat/${notification.relatedClaim}`);
+                } else {
+                    navigate('/lost-found/claims');
+                }
+            } else if (notification.relatedLostFound) {
+                navigate(`/lost-found/${notification.relatedLostFound}`);
+            } else {
+                navigate('/lost-found/claims');
+            }
+            return;
+        }
+        
+        // Wanted Items notifications
+        if (type?.startsWith('WANTED_')) {
+            if (notification.relatedOffer) {
+                // For offer-related notifications
+                if (type === 'WANTED_OFFER_ACCEPTED' || type === 'WANTED_OFFER_MESSAGE') {
+                    navigate(`/wanted/chat/${notification.relatedOffer}`);
+                } else {
+                    navigate('/wanted/my-offers');
+                }
+            } else if (notification.relatedWantedItem) {
+                navigate(`/wanted/${notification.relatedWantedItem}`);
+            } else {
+                navigate('/wanted/my-offers');
+            }
+            return;
         }
     };
 

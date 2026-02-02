@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Bell, User, LogOut, Package, Search, MessageSquare, MapPin, Inbox } from 'lucide-react';
+import { Menu, X, Bell, User, LogOut, Package, Search, MessageSquare, MapPin, Inbox, ClipboardList, Heart } from 'lucide-react';
 import useAuthStore from '../../stores/authStore';
 import useNotificationStore from '../../stores/notificationStore';
 import { Avatar, Badge } from '../ui';
@@ -23,6 +23,7 @@ export default function Navbar() {
         { to: '/requests', label: 'Requests', icon: Inbox },
         { to: '/transactions', label: 'Transactions', icon: MessageSquare },
         { to: '/lost-found', label: 'Lost & Found', icon: MapPin },
+        { to: '/wanted', label: 'Wanted', icon: Heart },
     ];
 
     return (

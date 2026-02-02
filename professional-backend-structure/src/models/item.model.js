@@ -47,6 +47,42 @@ const itemSchema = new Schema(
         isAvailable: {
             type: Boolean,
             default: true
+        },
+        condition: {
+            type: String,
+            enum: ['NEW', 'LIKE_NEW', 'GOOD', 'FAIR', 'POOR'],
+            required: true
+        },
+        instantClaim: {
+            type: Boolean,
+            default: false
+        },
+        maxClaimers: {
+            type: Number,
+            default: 1
+        },
+        claimedBy: [{
+            user: { type: Schema.Types.ObjectId, ref: 'User' },
+            claimedAt: Date,
+            status: {
+                type: String,
+                enum: ['PENDING_PICKUP', 'COMPLETED', 'CANCELLED'],
+                default: 'PENDING_PICKUP'
+            }
+        }],
+        rentalTerms: {
+            minDays: Number,
+            maxDays: Number,
+            depositRequired: Boolean,
+            depositAmount: Number
+        },
+        viewCount: { type: Number, default: 0 },
+        requestCount: { type: Number, default: 0 },
+        pickupLocation: String,
+        availabilitySchedule: {
+            type: String,
+            enum: ['ANYTIME', 'WEEKDAYS', 'WEEKENDS', 'BY_APPOINTMENT'],
+            default: 'ANYTIME'
         }
     },
     {

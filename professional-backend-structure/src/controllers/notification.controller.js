@@ -5,14 +5,36 @@ import { Notification } from '../models/notification.model.js';
 
 const createNotificationHelper = async (userId, type, message, relatedId = null, relatedModel = 'Transaction') => {
     try {
-        const notification = await Notification.create({
+        const notificationData = {
             user: userId,
             type,
             title: type.replace(/_/g, ' '),
-            message,
-            relatedTransaction: relatedModel === 'Transaction' ? relatedId : null,
-            relatedRequest: relatedModel === 'Request' ? relatedId : null
-        });
+            message
+        };
+
+        // Set the appropriate related field based on model type
+        switch (relatedModel) {
+            case 'Transaction':
+                notificationData.relatedTransaction = relatedId;
+                break;
+            case 'Request':
+                notificationData.relatedRequest = relatedId;
+                break;
+            case 'LostFoundClaim':
+                notificationData.relatedClaim = relatedId;
+                break;
+            case 'LostFound':
+                notificationData.relatedLostFound = relatedId;
+                break;
+            case 'Offer':
+                notificationData.relatedOffer = relatedId;
+                break;
+            case 'WantedItem':
+                notificationData.relatedWantedItem = relatedId;
+                break;
+        }
+
+        const notification = await Notification.create(notificationData);
         return notification;
     } catch (error) {
         console.error('Error creating notification:', error);

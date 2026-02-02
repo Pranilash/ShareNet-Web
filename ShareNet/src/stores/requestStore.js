@@ -5,6 +5,7 @@ const useRequestStore = create((set, get) => ({
     myRequests: [],
     receivedRequests: [],
     activeRequests: [],
+    claimQueue: [],
     isLoading: false,
 
     fetchMyRequests: async () => {
@@ -82,6 +83,87 @@ const useRequestStore = create((set, get) => ({
             myRequests: get().myRequests.map(req => 
                 req._id === id ? { ...req, status: 'CANCELLED' } : req
             )
+        });
+        return response.data;
+    },
+
+    // Instant claim for free items
+    instantClaim: async (itemId) => {
+        const response = await api.post(`/requests/instant-claim/${itemId}`);
+        return response.data;
+    },
+
+    // Get claim queue for free items
+    getClaimQueue: async (itemId) => {
+        const response = await api.get(`/requests/claim-queue/${itemId}`);
+        const data = response.data.data;
+        set({ claimQueue: data.claims || data });
+        return data.claims || data;
+    },
+
+    // Update claim status (for owner)
+    updateClaimStatus: async (claimId, status) => {
+        const response = await api.patch(`/requests/claims/${claimId}/status`, { status });
+        set({
+            claimQueue: get().claimQueue.map(claim =>
+                claim._id === claimId ? { ...claim, status } : claim
+            )
+        });
+        return response.data;
+    },
+
+    // Create counter-offer
+    createCounterOffer: async (requestId, offer) => {
+        const response = await api.post(`/requests/${requestId}/counter-offer`, offer);
+        set({
+            receivedRequests: get().receivedRequests.map(req =>
+                req._id === requestId ? { ...req, counterOffer: response.data.data.counterOffer } : req
+            )
+        });
+        return response.data;
+    },
+
+    // Respond to counter-offer (accept/reject)
+    respondToCounterOffer: async (requestId, accept) => {
+        const response = await api.post(`/requests/${requestId}/counter-offer/respond`, { accept });
+        const status = accept ? 'ACCEPTED' : 'REJECTED';
+        set({
+            myRequests: get().myRequests.map(req =>
+                req._id === requestId ? { 
+                    ...req, 
+                    counterOffer: { ...req.counterOffer, status },
+                    status: accept ? 'ACCEPTED' : req.status
+                } : req
+            )
+        });
+        return response.data;
+    },
+
+    // Propose pickup details
+    proposePickupDetails: async (requestId, details) => {
+        const response = await api.post(`/requests/${requestId}/pickup`, details);
+        const updateRequest = (req) => 
+            req._id === requestId ? { ...req, pickupDetails: response.data.data.pickupDetails } : req;
+        
+        set({
+            receivedRequests: get().receivedRequests.map(updateRequest),
+            myRequests: get().myRequests.map(updateRequest)
+        });
+        return response.data;
+    },
+
+    // Confirm pickup details
+    confirmPickupDetails: async (requestId) => {
+        const response = await api.post(`/requests/${requestId}/pickup/confirm`);
+        const updateRequest = (req) =>
+            req._id === requestId ? { 
+                ...req, 
+                pickupDetails: { ...req.pickupDetails, status: 'CONFIRMED' } 
+            } : req;
+
+        set({
+            receivedRequests: get().receivedRequests.map(updateRequest),
+            myRequests: get().myRequests.map(updateRequest)
         });
         return response.data;
     }
