@@ -124,7 +124,7 @@ export default function ItemDetail() {
         try {
             await instantClaim(id);
             toast.success('Item claimed successfully!');
-            await loadClaimQueue();
+            await Promise.all([loadClaimQueue(), fetchItem(id)]);
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to claim item');
         } finally {
@@ -245,8 +245,10 @@ export default function ItemDetail() {
                             </div>
                         )}
                         {!currentItem.isAvailable && (
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <span className="text-white text-xl font-medium">Currently Unavailable</span>
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                                <div className="bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg text-center">
+                                    <span className="text-2xl font-bold tracking-wide uppercase">Unavailable</span>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -270,6 +272,7 @@ export default function ItemDetail() {
 
                 {/* Item Details */}
                 <div className="space-y-6">
+                    {/* 1. Title + Mode Badge + Condition Badge */}
                     <div>
                         <div className="flex items-start justify-between gap-4">
                             <h1 className="text-3xl font-bold text-gray-900">{currentItem.title}</h1>
@@ -280,7 +283,17 @@ export default function ItemDetail() {
                                         {condition.label}
                                     </Badge>
                                 )}
-                                <Badge variant={modeColors[currentItem.mode]} className="text-sm">
+                                <Badge
+                                    variant={modeColors[currentItem.mode]}
+                                    className="text-sm"
+                                    title={
+                                        currentItem.mode === 'RENT'
+                                            ? 'This item is for rent'
+                                            : currentItem.mode === 'SELL'
+                                            ? 'This item is for sale'
+                                            : 'This item is free'
+                                    }
+                                >
                                     {currentItem.mode}
                                 </Badge>
                             </div>
@@ -288,6 +301,7 @@ export default function ItemDetail() {
                         <p className="text-gray-500 mt-1">{currentItem.category}</p>
                     </div>
 
+                    {/* 2. Price / "Free" */}
                     {currentItem.price > 0 && (
                         <div className="text-3xl font-bold text-blue-600">
                             ${currentItem.price}
@@ -297,6 +311,53 @@ export default function ItemDetail() {
 
                     {currentItem.mode === 'GIVE' && (
                         <div className="text-2xl font-bold text-green-600">Free</div>
+                    )}
+
+                    {/* 3. Primary Action Card */}
+                    {!isOwner && currentItem.isAvailable && (
+                        <>
+                            {isFreeInstantClaim ? (
+                                <InstantClaimButton 
+                                    item={currentItem}
+                                    onClaim={handleInstantClaim}
+                                    isLoading={isClaiming}
+                                    userClaim={userClaim}
+                                />
+                            ) : (
+                                <Button 
+                                    size="lg" 
+                                    className="w-full"
+                                    onClick={() => setShowRequestModal(true)}
+                                >
+                                    <MessageSquare size={20} />
+                                    {currentItem.mode === 'GIVE' ? 'Request This Item' : 'Make an Offer'}
+                                </Button>
+                            )}
+                        </>
+                    )}
+
+                    {/* 4. Owner actions + ClaimQueue */}
+                    {isOwner && (
+                        <div className="space-y-4">
+                            <div className="flex gap-4">
+                                <Button 
+                                    variant="outline"
+                                    onClick={() => navigate(`/my-items/${id}/edit`)}
+                                    className="flex-1"
+                                >
+                                    Edit Item
+                                </Button>
+                            </div>
+                            
+                            {isFreeInstantClaim && (
+                                <ClaimQueue 
+                                    item={currentItem}
+                                    claims={claimQueue}
+                                    onConfirmPickup={handleConfirmClaimPickup}
+                                    onContact={(claim) => navigate(`/messages/${claim.requester?._id}`)}
+                                />
+                            )}
+                        </div>
                     )}
 
                     {/* Rental Details */}
@@ -329,6 +390,7 @@ export default function ItemDetail() {
                         </Card>
                     )}
 
+                    {/* 5. Description */}
                     <Card>
                         <Card.Body>
                             <h3 className="font-semibold mb-2">Description</h3>
@@ -336,7 +398,7 @@ export default function ItemDetail() {
                         </Card.Body>
                     </Card>
 
-                    {/* Pickup Location */}
+                    {/* 6. Pickup Location + Schedule */}
                     {currentItem.pickupLocation && (
                         <Card>
                             <Card.Body>
@@ -355,7 +417,7 @@ export default function ItemDetail() {
                         </Card>
                     )}
 
-                    {/* Owner Info */}
+                    {/* 7. Owner Info */}
                     <Card>
                         <Card.Body className="flex items-center gap-4">
                             <Avatar src={currentItem.owner?.avatar} name={currentItem.owner?.fullName} size="lg" />
@@ -366,53 +428,6 @@ export default function ItemDetail() {
                             <TrustScore score={currentItem.owner?.trustScore} />
                         </Card.Body>
                     </Card>
-
-                    {/* Actions for non-owners */}
-                    {!isOwner && currentItem.isAvailable && (
-                        <>
-                            {isFreeInstantClaim ? (
-                                <InstantClaimButton 
-                                    item={currentItem}
-                                    onClaim={handleInstantClaim}
-                                    isLoading={isClaiming}
-                                    userClaim={userClaim}
-                                />
-                            ) : (
-                                <Button 
-                                    size="lg" 
-                                    className="w-full"
-                                    onClick={() => setShowRequestModal(true)}
-                                >
-                                    <MessageSquare size={20} />
-                                    {currentItem.mode === 'GIVE' ? 'Request This Item' : 'Make an Offer'}
-                                </Button>
-                            )}
-                        </>
-                    )}
-
-                    {/* Owner actions */}
-                    {isOwner && (
-                        <div className="space-y-4">
-                            <div className="flex gap-4">
-                                <Button 
-                                    variant="outline"
-                                    onClick={() => navigate(`/my-items/${id}/edit`)}
-                                    className="flex-1"
-                                >
-                                    Edit Item
-                                </Button>
-                            </div>
-                            
-                            {isFreeInstantClaim && (
-                                <ClaimQueue 
-                                    item={currentItem}
-                                    claims={claimQueue}
-                                    onConfirmPickup={handleConfirmClaimPickup}
-                                    onContact={(claim) => navigate(`/messages/${claim.requester?._id}`)}
-                                />
-                            )}
-                        </div>
-                    )}
                 </div>
             </div>
 

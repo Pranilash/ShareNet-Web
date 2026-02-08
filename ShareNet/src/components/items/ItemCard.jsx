@@ -2,10 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Badge, Avatar, TrustScore } from '../ui';
 import { Zap, Package, Users } from 'lucide-react';
 
-const modeColors = {
-    RENT: 'primary',
-    SELL: 'success',
-    GIVE: 'warning'
+const modeConfig = {
+    RENT: { color: 'primary', label: 'For Rent' },
+    SELL: { color: 'success', label: 'For Sale' },
+    GIVE: { color: 'warning', label: 'Free' }
 };
 
 const conditionLabels = {
@@ -19,6 +19,7 @@ const conditionLabels = {
 export default function ItemCard({ item }) {
     const navigate = useNavigate();
     const condition = conditionLabels[item.condition];
+    const mode = modeConfig[item.mode];
     const claimedCount = item.claimedCount || 0;
     const maxClaimers = item.maxClaimers || 1;
     const isFullyClaimed = item.mode === 'GIVE' && item.instantClaim && claimedCount >= maxClaimers;
@@ -45,12 +46,13 @@ export default function ItemCard({ item }) {
                 {/* Badges container */}
                 <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
                     <Badge 
-                        variant={modeColors[item.mode]} 
+                        variant={mode.color} 
+                        title={mode.label}
                     >
-                        {item.mode}
+                        {mode.label}
                     </Badge>
                     {item.mode === 'GIVE' && item.instantClaim && (
-                        <Badge variant="warning" className="text-xs">
+                        <Badge variant="warning" className="text-xs" title="Instant claim - join the queue immediately">
                             <Zap size={12} className="mr-1" />
                             Instant
                         </Badge>
@@ -60,7 +62,7 @@ export default function ItemCard({ item }) {
                 {/* Condition badge */}
                 {condition && (
                     <div className="absolute top-2 left-2">
-                        <Badge variant={condition.color} className="text-xs">
+                        <Badge variant={condition.color} className="text-xs" title={`Item condition: ${condition.label}`}>
                             <Package size={12} className="mr-1" />
                             {condition.label}
                         </Badge>
@@ -70,9 +72,9 @@ export default function ItemCard({ item }) {
                 {/* Claimed count for free items */}
                 {item.mode === 'GIVE' && item.instantClaim && (
                     <div className="absolute bottom-2 left-2">
-                        <Badge variant="secondary" className="text-xs bg-white/90">
+                        <Badge variant="secondary" className="text-xs bg-white/90" title={`${claimedCount} of ${maxClaimers} claim slots filled`}>
                             <Users size={12} className="mr-1" />
-                            {claimedCount}/{maxClaimers}
+                            {claimedCount} of {maxClaimers} claimed
                         </Badge>
                     </div>
                 )}

@@ -241,9 +241,23 @@ export default function Register() {
                         )}
 
                         {email && email.includes('@') && !detectedCollege && (
-                            <p className="text-sm text-red-500">
-                                Not a recognized college email. Use your .edu / .ac.in / .edu.in address.
-                            </p>
+                            <div className="px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-sm space-y-1">
+                                <p className="text-amber-800 font-medium">
+                                    Not a recognized college email.
+                                </p>
+                                <p className="text-amber-700">
+                                    Use your .edu / .ac.in / .edu.in address. If your college isn't listed,{' '}
+                                    <a
+                                        href="https://github.com/Pranilash/ShareNet-Web/issues"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline font-medium"
+                                    >
+                                        raise an issue here
+                                    </a>{' '}
+                                    and we'll add it.
+                                </p>
+                            </div>
                         )}
 
                         <Button type="submit" loading={isLoading} className="w-full" disabled={!detectedCollege}>

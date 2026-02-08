@@ -21,9 +21,12 @@ export default function ItemFilters({ filters, onChange, onReset }) {
         onChange({ [key]: value });
     };
 
+    const showPrice = filters.mode !== 'GIVE';
+    const gridCols = showPrice ? 'md:grid-cols-5' : 'md:grid-cols-4';
+
     return (
         <div className="bg-white p-4 rounded-xl shadow-sm border mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className={`grid grid-cols-1 ${gridCols} gap-4`}>
                 <Input
                     placeholder="Search items..."
                     value={filters.search}
@@ -41,20 +44,22 @@ export default function ItemFilters({ filters, onChange, onReset }) {
                     value={filters.mode}
                     onChange={(e) => handleChange('mode', e.target.value)}
                 />
-                <div className="flex gap-2">
-                    <Input
-                        type="number"
-                        placeholder="Min $"
-                        value={filters.priceMin}
-                        onChange={(e) => handleChange('priceMin', e.target.value)}
-                    />
-                    <Input
-                        type="number"
-                        placeholder="Max $"
-                        value={filters.priceMax}
-                        onChange={(e) => handleChange('priceMax', e.target.value)}
-                    />
-                </div>
+                {showPrice && (
+                    <div className="flex gap-2">
+                        <Input
+                            type="number"
+                            placeholder="Min $"
+                            value={filters.priceMin}
+                            onChange={(e) => handleChange('priceMin', e.target.value)}
+                        />
+                        <Input
+                            type="number"
+                            placeholder="Max $"
+                            value={filters.priceMax}
+                            onChange={(e) => handleChange('priceMax', e.target.value)}
+                        />
+                    </div>
+                )}
                 <Button variant="secondary" onClick={onReset}>
                     Reset
                 </Button>

@@ -13,15 +13,20 @@ export default function TrustScore({ score, size = 'md' }) {
     };
 
     return (
-        <div 
-            className={`
-                ${sizes[size]} 
-                ${getColor(score)}
-                rounded-full border-2 flex items-center justify-center font-bold
-            `}
-            title={`Trust Score: ${score}/100`}
-        >
-            {score}
+        <div className="flex flex-col items-center">
+            <div 
+                className={`
+                    ${sizes[size]} 
+                    ${getColor(score)}
+                    rounded-full border-2 flex items-center justify-center font-bold
+                `}
+                title={`Trust Score: ${score}/100 — Based on successful transactions. Higher is more reliable.`}
+            >
+                {score}
+            </div>
+            <span className={`${size === 'sm' ? 'text-[10px]' : 'text-xs'} text-gray-500 mt-0.5`}>
+                Trust
+            </span>
         </div>
     );
 }

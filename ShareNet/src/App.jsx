@@ -28,6 +28,7 @@ import WantedItemDetail from './pages/WantedItems/WantedItemDetail';
 import CreateWantedItem from './pages/WantedItems/CreateWantedItem';
 import MyOffers from './pages/WantedItems/MyOffers';
 import OfferChat from './pages/WantedItems/OfferChat';
+import HowToUse from './pages/HowToUse';
 
 function App() {
     const { checkAuth, isAuthenticated } = useAuthStore();
@@ -47,6 +48,9 @@ function App() {
     return (
         <BrowserRouter>
             <Routes>
+                {/* Full-screen page without navbar */}
+                <Route path="/how-to-use" element={<HowToUse />} />
+
                 <Route element={<Layout />}>
                     {/* Public Routes */}
                     <Route path="/" element={<Home />} />

@@ -18,12 +18,12 @@ export default function Navbar() {
     };
 
     const navLinks = [
-        { to: '/items', label: 'Browse', icon: Search },
-        { to: '/my-items', label: 'My Items', icon: Package },
-        { to: '/requests', label: 'Requests', icon: Inbox },
-        { to: '/transactions', label: 'Transactions', icon: MessageSquare },
-        { to: '/lost-found', label: 'Lost & Found', icon: MapPin },
-        { to: '/wanted', label: 'Wanted', icon: Heart },
+        { to: '/items', label: 'Browse', icon: Search, title: 'Browse items shared by students' },
+        { to: '/my-items', label: 'My Items', icon: Package, title: "Items you've listed" },
+        { to: '/requests', label: 'Inbox', icon: Inbox, title: "Requests and offers you've sent or received" },
+        { to: '/transactions', label: 'Deals', icon: MessageSquare, title: 'Your accepted deals and pickups' },
+        { to: '/lost-found', label: 'Lost & Found', icon: MapPin, title: 'Report or find lost items on campus' },
+        { to: '/wanted', label: 'Wanted', icon: Heart, title: 'Items students are looking for' },
     ];
 
     return (
@@ -36,6 +36,9 @@ export default function Navbar() {
                                 <span className="text-white font-bold">S</span>
                             </div>
                             <span className="text-xl font-bold text-gray-900">ShareNet</span>
+                            {isAuthenticated && user?.college && (
+                                <span className="text-xs text-gray-400 ml-1">{user.college}</span>
+                            )}
                         </Link>
 
                         {isAuthenticated && (
@@ -44,6 +47,7 @@ export default function Navbar() {
                                     <Link
                                         key={link.to}
                                         to={link.to}
+                                        title={link.title}
                                         className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
                                     >
                                         <link.icon size={18} />
@@ -122,6 +126,7 @@ export default function Navbar() {
                             <Link
                                 key={link.to}
                                 to={link.to}
+                                title={link.title}
                                 onClick={() => setIsOpen(false)}
                                 className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
                             >

@@ -69,20 +69,20 @@ export default function Requests() {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Requests</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-6">Inbox</h1>
 
             <div className="flex gap-2 mb-6">
                 <Button
                     variant={tab === 'received' ? 'primary' : 'secondary'}
                     onClick={() => setTab('received')}
                 >
-                    Received ({receivedRequests.filter(r => r.status === 'PENDING').length})
+                    Received Requests ({receivedRequests.filter(r => r.status === 'PENDING').length})
                 </Button>
                 <Button
                     variant={tab === 'sent' ? 'primary' : 'secondary'}
                     onClick={() => setTab('sent')}
                 >
-                    Sent ({myRequests.length})
+                    Sent Requests ({myRequests.length})
                 </Button>
             </div>
 
@@ -150,18 +150,22 @@ export default function Requests() {
                                             <Button
                                                 size="sm"
                                                 variant="success"
+                                                title="Accept this request"
                                                 onClick={() => handleAccept(request._id)}
                                                 loading={actionLoading === request._id}
                                             >
                                                 <Check size={16} />
+                                                <span className="hidden sm:inline">Accept</span>
                                             </Button>
                                             <Button
                                                 size="sm"
                                                 variant="danger"
+                                                title="Reject this request"
                                                 onClick={() => handleReject(request._id)}
                                                 loading={actionLoading === request._id}
                                             >
                                                 <X size={16} />
+                                                <span className="hidden sm:inline">Reject</span>
                                             </Button>
                                         </>
                                     )}
@@ -169,6 +173,7 @@ export default function Requests() {
                                         <Button
                                             size="sm"
                                             variant="secondary"
+                                            title="Cancel your request"
                                             onClick={() => handleCancel(request._id)}
                                             loading={actionLoading === request._id}
                                         >

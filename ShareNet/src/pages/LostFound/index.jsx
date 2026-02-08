@@ -31,11 +31,18 @@ const URGENCY_LEVELS = [
     { value: 'critical', label: 'Critical' }
 ];
 
-const urgencyColors = {
-    low: 'bg-gray-400',
-    medium: 'bg-yellow-400',
-    high: 'bg-orange-500',
-    critical: 'bg-red-500'
+const urgencyBadgeVariant = {
+    low: 'gray',
+    medium: 'warning',
+    high: 'danger',
+    critical: 'danger'
+};
+
+const urgencyLabel = {
+    low: 'Low',
+    medium: 'Medium',
+    high: 'High',
+    critical: 'Critical'
 };
 
 export default function LostFoundIndex() {
@@ -58,15 +65,13 @@ export default function LostFoundIndex() {
     useEffect(() => {
         if (activeTab === 'myPosts') {
             fetchMyPosts();
-        } else if (activeTab === 'myClaims') {
-            // Claims will be handled in MyClaims component
         } else {
             fetchPosts();
         }
     }, [activeTab]);
 
     useEffect(() => {
-        if (activeTab !== 'myPosts' && activeTab !== 'myClaims') {
+        if (activeTab !== 'myPosts') {
             const typeFilter = activeTab === 'lost' ? 'LOST' : activeTab === 'found' ? 'FOUND' : '';
             if (filter.type !== typeFilter) {
                 setFilter({ type: typeFilter });
@@ -112,41 +117,37 @@ export default function LostFoundIndex() {
         { id: 'all', label: 'All Posts', count: safePosts.length },
         { id: 'lost', label: 'Lost Items', count: safePosts.filter(p => p.type === 'LOST').length },
         { id: 'found', label: 'Found Items', count: safePosts.filter(p => p.type === 'FOUND').length },
-        { id: 'myPosts', label: 'My Posts', count: safeMyPosts.length },
-        { id: 'myClaims', label: 'My Claims', count: 0 }
+        { id: 'myPosts', label: 'My Posts', count: safeMyPosts.length }
     ];
 
     return (
         <div className="min-h-screen">
             {/* Hero Section with Stats */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-8 mb-8">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-6 mb-8">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h1 className="text-3xl font-bold mb-4">Lost & Found</h1>
-                    <p className="text-blue-100 mb-8">
-                        Help reunite items with their owners. Report lost items or claim found ones.
-                    </p>
+                    <h1 className="text-2xl font-bold mb-4">Lost & Found</h1>
                     
-                    <div className="grid grid-cols-3 gap-6">
-                        <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                <Eye size={24} />
-                                <span className="text-3xl font-bold">{stats.itemsFound}</span>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="bg-white/10 backdrop-blur rounded-xl p-3" title="Total items reported as found by the community">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <Eye size={20} />
+                                <span className="text-2xl font-bold">{stats.itemsFound}</span>
                             </div>
-                            <p className="text-blue-100 text-sm">Items Found</p>
+                            <p className="text-blue-100 text-xs">Items Found</p>
                         </div>
-                        <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                <CheckCircle size={24} />
-                                <span className="text-3xl font-bold">{stats.itemsReturned}</span>
+                        <div className="bg-white/10 backdrop-blur rounded-xl p-3" title="Items successfully returned to their owners">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <CheckCircle size={20} />
+                                <span className="text-2xl font-bold">{stats.itemsReturned}</span>
                             </div>
-                            <p className="text-blue-100 text-sm">Items Returned</p>
+                            <p className="text-blue-100 text-xs">Items Returned</p>
                         </div>
-                        <div className="bg-white/10 backdrop-blur rounded-xl p-4">
-                            <div className="flex items-center justify-center gap-2 mb-2">
-                                <TrendingUp size={24} />
-                                <span className="text-3xl font-bold">{stats.successRate}%</span>
+                        <div className="bg-white/10 backdrop-blur rounded-xl p-3" title="Percentage of posts that have been resolved">
+                            <div className="flex items-center justify-center gap-2 mb-1">
+                                <TrendingUp size={20} />
+                                <span className="text-2xl font-bold">{stats.successRate}%</span>
                             </div>
-                            <p className="text-blue-100 text-sm">Success Rate</p>
+                            <p className="text-blue-100 text-xs">Success Rate</p>
                         </div>
                     </div>
                 </div>
@@ -157,13 +158,7 @@ export default function LostFoundIndex() {
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => {
-                            if (tab.id === 'myClaims') {
-                                navigate('/lost-found/claims');
-                            } else {
-                                setActiveTab(tab.id);
-                            }
-                        }}
+                        onClick={() => setActiveTab(tab.id)}
                         className={`
                             px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2
                             ${activeTab === tab.id 
@@ -347,11 +342,14 @@ function PostCard({ post, currentUser }) {
                     {post.type}
                 </Badge>
 
-                {/* Urgency Indicator */}
+                {/* Urgency Badge */}
                 {post.urgency && (
-                    <div className={`absolute top-3 right-3 w-3 h-3 rounded-full ${urgencyColors[post.urgency]}`} 
-                         title={`${post.urgency} urgency`} 
-                    />
+                    <Badge 
+                        variant={urgencyBadgeVariant[post.urgency]} 
+                        className="absolute top-3 right-3 text-xs"
+                    >
+                        {urgencyLabel[post.urgency]}
+                    </Badge>
                 )}
 
                 {/* Reward Badge */}
