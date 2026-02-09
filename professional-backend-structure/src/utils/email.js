@@ -1,34 +1,16 @@
-import nodemailer from "nodemailer"
+import { Resend } from "resend"
 import crypto from "crypto"
 
-let transporter = null
-
-const getTransporter = () => {
-    if (!transporter) {
-        transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT) || 587,
-            secure: false,
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        })
-    }
-    return transporter
-}
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 const generateOTP = () => {
     return crypto.randomInt(100000, 999999).toString()
 }
 
 const sendOTPEmail = async (email, otp) => {
-    const mailOptions = {
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to: email,
+    const { data, error } = await resend.emails.send({
+        from: process.env.RESEND_FROM || "ShareNet <onboarding@resend.dev>",
+        to: [email],
         subject: "ShareNet - Verify Your College Email",
         html: `
             <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb;">
@@ -55,9 +37,13 @@ const sendOTPEmail = async (email, otp) => {
                 </div>
             </div>
         `
+    })
+
+    if (error) {
+        throw new Error(error.message)
     }
 
-    return await getTransporter().sendMail(mailOptions)
+    return data
 }
 
 export { generateOTP, sendOTPEmail }
