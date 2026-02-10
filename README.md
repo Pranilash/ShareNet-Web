@@ -60,17 +60,17 @@ ShareNet is not a single shared marketplace. It is a **multi-tenant platform whe
 ┌─────────────────────────────────────────────────────────────────┐
 │                     ShareNet (Single Deployment)                │
 │                                                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
-│  │  IIIT       │  │  IIT        │  │  NIT        │   ...100+   │
-│  │  Lucknow    │  │  Bombay     │  │  Trichy     │   colleges  │
-│  │             │  │             │  │             │             │
-│  │ Items       │  │ Items       │  │ Items       │             │
-│  │ Users       │  │ Users       │  │ Users       │             │
-│  │ Lost&Found  │  │ Lost&Found  │  │ Lost&Found  │             │
-│  │ Wanted      │  │ Wanted      │  │ Wanted      │             │
-│  │ Trust Scores│  │ Trust Scores│  │ Trust Scores│             │
-│  └─────────────┘  └─────────────┘  └─────────────┘             │
-│       ↕ Zero data leakage between campuses ↕                   │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              │
+│  │  IIIT       │  │  IIT        │  │  NIT        │   ...100+    │
+│  │  Lucknow    │  │  Bombay     │  │  Trichy     │   colleges   │
+│  │             │  │             │  │             │              │
+│  │ Items       │  │ Items       │  │ Items       │              │
+│  │ Users       │  │ Users       │  │ Users       │              │
+│  │ Lost&Found  │  │ Lost&Found  │  │ Lost&Found  │              │
+│  │ Wanted      │  │ Wanted      │  │ Wanted      │              │
+│  │ Trust Scores│  │ Trust Scores│  │ Trust Scores│              │
+│  └─────────────┘  └─────────────┘  └─────────────┘              │
+│       ↕ Zero data leakage between campuses ↕                    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
