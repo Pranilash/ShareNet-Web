@@ -254,8 +254,8 @@ Enter Email → Detect College Domain → Send 6-Digit OTP (Resend API) → Veri
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                         FRONTEND                                 │
-│  React 19 · Vite · Tailwind CSS · Zustand · React Router 7      │
-│  Socket.IO Client · Axios · Lucide Icons · date-fns             │
+│  React 19 · Vite · Tailwind CSS · Zustand · React Router 7       │
+│  Socket.IO Client · Axios · Lucide Icons · date-fns              │
 └───────────────────────┬──────────────────────────────────────────┘
                         │  REST API (Axios) + WebSocket (Socket.IO)
 ┌───────────────────────▼──────────────────────────────────────────┐
@@ -421,6 +421,6 @@ MIT
 ---
 
 <p align="center">
-  <strong>Built for students. Powered by ML. Driven by trust.</strong><br/>
+  <strong>Built for students. Driven by trust. Scaled for every campus.</strong><br/>
   Share more. Spend less. Build community.
 </p>
