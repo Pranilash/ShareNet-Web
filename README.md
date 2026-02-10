@@ -416,7 +416,7 @@ Have a college that's not supported? [Open an issue](https://github.com/Pranilas
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ---
 
