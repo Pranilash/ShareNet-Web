@@ -19,10 +19,10 @@ const CATEGORIES = [
 ];
 
 const URGENCY_LEVELS = [
-    { value: 'low', label: 'Low', description: 'No rush, whenever available', color: 'gray' },
-    { value: 'medium', label: 'Medium', description: 'Need it within a week', color: 'blue' },
-    { value: 'high', label: 'High', description: 'Need it in a few days', color: 'orange' },
-    { value: 'urgent', label: 'Urgent', description: 'Need it ASAP', color: 'red' }
+    { value: 'low', label: 'Low', description: 'No rush, whenever available', activeClasses: 'border-gray-500 bg-gray-50 text-gray-700', hoverClasses: 'hover:border-gray-300' },
+    { value: 'medium', label: 'Medium', description: 'Need it within a week', activeClasses: 'border-blue-500 bg-blue-50 text-blue-700', hoverClasses: 'hover:border-blue-300' },
+    { value: 'high', label: 'High', description: 'Need it in a few days', activeClasses: 'border-orange-500 bg-orange-50 text-orange-700', hoverClasses: 'hover:border-orange-300' },
+    { value: 'urgent', label: 'Urgent', description: 'Need it ASAP', activeClasses: 'border-red-500 bg-red-50 text-red-700', hoverClasses: 'hover:border-red-300' }
 ];
 
 const BUDGET_TYPES = [
@@ -315,8 +315,8 @@ export default function CreateWantedItem({ isOpen, onClose, onSuccess }) {
                                 className={`
                                     p-2 rounded-lg border-2 transition-all text-center
                                     ${formData.urgency === level.value
-                                        ? `border-${level.color}-500 bg-${level.color}-50`
-                                        : 'border-gray-200 hover:border-gray-300'}
+                                        ? level.activeClasses
+                                        : `border-gray-200 ${level.hoverClasses}`}
                                 `}
                             >
                                 <span className="text-sm font-medium">{level.label}</span>

@@ -77,9 +77,10 @@ export default function Profile() {
                         <div>
                             <h2 className="text-xl font-semibold">{user.fullName}</h2>
                             <p className="text-gray-500">@{user.username}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
                         </div>
                         <div className="ml-auto">
-                            <TrustScore score={user.trustScore} size="lg" />
+                            <TrustScore score={user.trustScore ?? 50} size="lg" />
                         </div>
                     </div>
 
@@ -131,7 +132,7 @@ export default function Profile() {
                             </div>
                             <div>
                                 <label className="text-sm text-gray-500">Trust Score</label>
-                                <p className="font-medium">{user.trustScore} / 100</p>
+                                <p className="font-medium">{user.trustScore ?? 50} / 100</p>
                             </div>
                             <Button onClick={() => setIsEditing(true)}>
                                 Edit Profile

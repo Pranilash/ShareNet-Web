@@ -9,7 +9,7 @@ import { createNotificationHelper } from './notification.controller.js';
 const VALID_STATUS_TRANSITIONS = {
     'PENDING': ['ACCEPTED', 'REJECTED', 'CANCELLED'],
     'ACCEPTED': ['AGREEMENT_PROPOSED', 'CANCELLED', 'DISPUTED'],
-    'AGREEMENT_PROPOSED': ['ACTIVE', 'CANCELLED', 'DISPUTED'],
+    'AGREEMENT_PROPOSED': ['ACTIVE', 'COMPLETED', 'CANCELLED', 'DISPUTED'],
     'ACTIVE': ['RETURN_PENDING', 'DISPUTED'],
     'RETURN_PENDING': ['COMPLETED', 'DISPUTED'],
     'COMPLETED': [],
@@ -137,7 +137,9 @@ const proposeAgreement = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Agreement can only be proposed after request is accepted");
     }
 
-    if (agreedPrice !== undefined) {
+    if (transaction.item.mode === 'GIVE') {
+        transaction.agreedPrice = 0;
+    } else if (agreedPrice !== undefined) {
         transaction.agreedPrice = Number(agreedPrice) || 0;
     }
     if (agreedDuration !== undefined && !isNaN(Number(agreedDuration))) {
@@ -185,20 +187,38 @@ const confirmAgreement = asyncHandler(async (req, res) => {
         throw new ApiError(400, "No agreement to confirm");
     }
 
-    transaction.status = 'ACTIVE';
-    transaction.startDate = transaction.startDate || new Date();
-    await transaction.save();
+    if (transaction.item.mode === 'RENT') {
+        transaction.status = 'ACTIVE';
+        transaction.startDate = transaction.startDate || new Date();
+        await transaction.save();
 
-    await createNotificationHelper(
-        transaction.owner,
-        'AGREEMENT_CONFIRMED',
-        `Agreement confirmed for "${transaction.item.title}". Transaction is now active.`,
-        transaction._id,
-        'Transaction'
-    );
+        await createNotificationHelper(
+            transaction.owner,
+            'AGREEMENT_CONFIRMED',
+            `Agreement confirmed for "${transaction.item.title}". Transaction is now active.`,
+            transaction._id,
+            'Transaction'
+        );
+    } else {
+        transaction.status = 'COMPLETED';
+        transaction.endDate = new Date();
+        await transaction.save();
+
+        await Item.findByIdAndUpdate(transaction.item._id, { isAvailable: false });
+        await updateTrustScoreHelper(transaction.requester, 'COMPLETED');
+        await updateTrustScoreHelper(transaction.owner, 'COMPLETED');
+
+        await createNotificationHelper(
+            transaction.owner,
+            'TRANSACTION_COMPLETED',
+            `"${transaction.item.title}" has been ${transaction.item.mode === 'SELL' ? 'sold' : 'given away'} successfully!`,
+            transaction._id,
+            'Transaction'
+        );
+    }
 
     return res.status(200).json(
-        new ApiResponse(200, transaction, "AGREEMENT CONFIRMED - TRANSACTION NOW ACTIVE")
+        new ApiResponse(200, transaction, "AGREEMENT CONFIRMED")
     );
 });
 
@@ -213,6 +233,10 @@ const markReturnPending = asyncHandler(async (req, res) => {
 
     if (transaction.requester.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "Only the borrower can mark as return pending");
+    }
+
+    if (transaction.item.mode !== 'RENT') {
+        throw new ApiError(400, "Return flow is only for rental transactions");
     }
 
     if (transaction.status !== 'ACTIVE') {
@@ -246,6 +270,10 @@ const confirmReturn = asyncHandler(async (req, res) => {
 
     if (transaction.owner.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "Only the owner can confirm return");
+    }
+
+    if (transaction.item.mode !== 'RENT') {
+        throw new ApiError(400, "Return flow is only for rental transactions");
     }
 
     if (transaction.status !== 'RETURN_PENDING') {

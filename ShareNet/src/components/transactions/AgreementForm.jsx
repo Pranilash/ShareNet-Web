@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Input, Button } from '../ui';
 
 export default function AgreementForm({ item, onSubmit, isLoading }) {
+    const isGive = item?.mode === 'GIVE';
+    const isRent = item?.mode === 'RENT';
+
     const [formData, setFormData] = useState({
-        agreedPrice: item?.price || '',
+        agreedPrice: isGive ? 0 : (item?.price ?? ''),
         agreedDuration: '',
         startDate: new Date().toISOString().split('T')[0],
         endDate: '',
@@ -12,30 +15,52 @@ export default function AgreementForm({ item, onSubmit, isLoading }) {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            const updated = { ...prev, [name]: value };
+            if (name === 'startDate' && updated.agreedDuration) {
+                const start = new Date(value);
+                start.setDate(start.getDate() + parseInt(updated.agreedDuration));
+                updated.endDate = start.toISOString().split('T')[0];
+            }
+            if (name === 'agreedDuration' && updated.startDate) {
+                const start = new Date(updated.startDate);
+                start.setDate(start.getDate() + parseInt(value));
+                updated.endDate = start.toISOString().split('T')[0];
+            }
+            return updated;
+        });
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit(formData);
+        onSubmit({
+            ...formData,
+            agreedPrice: isGive ? 0 : formData.agreedPrice
+        });
     };
 
     const minDate = new Date().toISOString().split('T')[0];
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-                label="Agreed Price ($)"
-                name="agreedPrice"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.agreedPrice}
-                onChange={handleChange}
-                required
-            />
+            {isGive ? (
+                <div className="px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 font-medium">
+                    This is a free item — no price needed.
+                </div>
+            ) : (
+                <Input
+                    label={`Agreed Price ($)${isRent ? ' per day' : ''}`}
+                    name="agreedPrice"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.agreedPrice}
+                    onChange={handleChange}
+                    required
+                />
+            )}
 
-            {item?.mode === 'RENT' && (
+            {isRent && (
                 <>
                     <Input
                         label="Duration (days)"
@@ -63,6 +88,7 @@ export default function AgreementForm({ item, onSubmit, isLoading }) {
                         value={formData.endDate}
                         onChange={handleChange}
                         required
+                        disabled
                     />
                 </>
             )}

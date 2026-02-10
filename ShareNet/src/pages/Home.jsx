@@ -1,10 +1,7 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui';
-import { Package, Users, Shield, Clock, Search, MessageSquare, ShoppingBag, PlusCircle, AlertCircle, HelpCircle, Sparkles } from 'lucide-react';
+import { Package, Users, Shield, Clock, Search, MessageSquare, ShoppingBag, PlusCircle, AlertCircle, HelpCircle, Github } from 'lucide-react';
 import useAuthStore from '../stores/authStore';
-import useItemStore from '../stores/itemStore';
-import ItemCard from '../components/items/ItemCard';
 
 const features = [
     {
@@ -74,13 +71,6 @@ const actionCards = [
 
 export default function Home() {
     const { isAuthenticated, user } = useAuthStore();
-    const { recommendations, fetchRecommendations } = useItemStore();
-
-    useEffect(() => {
-        if (isAuthenticated) {
-            fetchRecommendations();
-        }
-    }, [isAuthenticated]);
 
     return (
         <div className="space-y-16">
@@ -143,26 +133,6 @@ export default function Home() {
                 </section>
             )}
 
-            {/* Recommended for You */}
-            {isAuthenticated && recommendations.length > 0 && (
-                <section>
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                            <Sparkles className="text-white" size={20} />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-900">Recommended for You</h2>
-                            <p className="text-sm text-gray-500">Personalized picks based on your activity</p>
-                        </div>
-                    </div>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {recommendations.map(item => (
-                            <ItemCard key={item._id} item={item} />
-                        ))}
-                    </div>
-                </section>
-            )}
-
             {/* Features Section (non-authenticated) */}
             {!isAuthenticated && (
                 <section>
@@ -207,6 +177,30 @@ export default function Home() {
                     </Link>
                 </section>
             )}
+
+            {/* Open Source / Contribute */}
+            <section className="text-center py-8">
+                <div className="max-w-2xl mx-auto">
+                    <div className="w-12 h-12 bg-gray-900 rounded-xl flex items-center justify-center mx-auto mb-4">
+                        <Github className="text-white" size={24} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                        Want to Contribute?
+                    </h2>
+                    <p className="text-gray-600 mb-6">
+                        ShareNet is open source. Help us build a better campus sharing experience.
+                    </p>
+                    <a
+                        href="https://github.com/Pranilash/ShareNet-Web"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-full font-medium hover:bg-gray-800 transition-colors"
+                    >
+                        <Github size={18} />
+                        View on GitHub
+                    </a>
+                </div>
+            </section>
         </div>
     );
 }

@@ -97,6 +97,30 @@ export const useOfferChat = (offerId) => {
         }
     }, [offerId]);
 
+    const sendImage = useCallback(async (file) => {
+        if (!offerId || !file) return;
+        
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('content', 'Sent an image');
+            formData.append('type', 'IMAGE');
+            
+            const response = await api.post(`/offer-chats/${offerId}/messages`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const newMessage = response.data.data;
+            setMessages(prev => {
+                if (prev.some(m => m._id === newMessage._id)) return prev;
+                return [...prev, newMessage];
+            });
+            return newMessage;
+        } catch (error) {
+            console.error('Failed to send image:', error);
+            throw error;
+        }
+    }, [offerId]);
+
     const sendLocation = useCallback(async (location) => {
         if (!offerId) return;
         
@@ -182,6 +206,7 @@ export const useOfferChat = (offerId) => {
         typingUser,
         chat,
         sendMessage,
+        sendImage,
         sendLocation,
         proposeMeetup,
         respondToMeetup,

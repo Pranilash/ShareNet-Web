@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import { Input, Button, Card } from '../components/ui';
 import useAuthStore from '../stores/authStore';
 
 export default function Login() {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
@@ -54,15 +56,24 @@ export default function Login() {
                         required
                     />
 
-                    <Input
-                        label="Password"
-                        name="password"
-                        type="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        placeholder="Enter your password"
-                        required
-                    />
+                    <div className="relative">
+                        <Input
+                            label="Password"
+                            name="password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={formData.password}
+                            onChange={handleChange}
+                            placeholder="Enter your password"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-[34px] text-gray-400 hover:text-gray-600"
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
 
                     <Button type="submit" loading={isLoading} className="w-full">
                         Sign In

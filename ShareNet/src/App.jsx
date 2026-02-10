@@ -23,9 +23,11 @@ import LostFoundDetail from './pages/LostFound/LostFoundDetail';
 import MyClaims from './pages/LostFound/MyClaims';
 import ClaimChat from './pages/LostFound/ClaimChat';
 import CreateLostFoundPost from './pages/LostFound/CreateLostFoundPost';
+import EditLostFoundPost from './pages/LostFound/EditLostFoundPost';
 import WantedItemsIndex from './pages/WantedItems/index';
 import WantedItemDetail from './pages/WantedItems/WantedItemDetail';
 import CreateWantedItem from './pages/WantedItems/CreateWantedItem';
+import EditWantedItem from './pages/WantedItems/EditWantedItem';
 import MyOffers from './pages/WantedItems/MyOffers';
 import OfferChat from './pages/WantedItems/OfferChat';
 import HowToUse from './pages/HowToUse';
@@ -99,6 +101,9 @@ function App() {
                     <Route path="/lost-found/chat/:claimId" element={
                         <ProtectedRoute><ClaimChat /></ProtectedRoute>
                     } />
+                    <Route path="/lost-found/:id/edit" element={
+                        <ProtectedRoute><EditLostFoundPost /></ProtectedRoute>
+                    } />
                     <Route path="/lost-found/:id" element={
                         <ProtectedRoute><LostFoundDetail /></ProtectedRoute>
                     } />
@@ -115,6 +120,9 @@ function App() {
                     } />
                     <Route path="/wanted/chat/:offerId" element={
                         <ProtectedRoute><OfferChat /></ProtectedRoute>
+                    } />
+                    <Route path="/wanted/:id/edit" element={
+                        <ProtectedRoute><EditWantedItem /></ProtectedRoute>
                     } />
                     <Route path="/wanted/:id" element={
                         <ProtectedRoute><WantedItemDetail /></ProtectedRoute>

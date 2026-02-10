@@ -11,7 +11,8 @@ export default function OfferChatBox({ offerId, offer }) {
         messages, 
         isLoading, 
         typingUser, 
-        sendMessage, 
+        sendMessage,
+        sendImage,
         sendLocation,
         proposeMeetup,
         respondToMeetup,
@@ -64,17 +65,15 @@ export default function OfferChatBox({ offerId, offer }) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('image', file);
-
         setSending(true);
         try {
-            await sendMessage(URL.createObjectURL(file), 'IMAGE');
+            await sendImage(file);
             toast.success('Image sent');
         } catch (error) {
             toast.error('Failed to send image');
         } finally {
             setSending(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -166,10 +165,10 @@ export default function OfferChatBox({ offerId, offer }) {
 
                     {message.type === 'IMAGE' && (
                         <img 
-                            src={message.content} 
+                            src={message.image || message.content} 
                             alt="Shared image" 
                             className="max-w-full rounded-lg cursor-pointer hover:opacity-90"
-                            onClick={() => window.open(message.content, '_blank')}
+                            onClick={() => window.open(message.image || message.content, '_blank')}
                         />
                     )}
 

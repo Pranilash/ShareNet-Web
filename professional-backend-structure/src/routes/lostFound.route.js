@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
     createPost,
+    updatePost,
     getPosts,
     getMyPosts,
     getPostDetail,
@@ -31,6 +32,7 @@ router.route("/").post(upload.single("photo"), createPost);
 router.route("/").get(getPosts);
 router.route("/my-posts").get(getMyPosts);
 router.route("/:postId").get(getPostDetail);
+router.route("/:postId").put(upload.single("photo"), updatePost);
 router.route("/:postId/claims").get(getPostClaims);
 router.route("/:postId/resolve").patch(markResolved);
 router.route("/:postId").delete(deletePost);

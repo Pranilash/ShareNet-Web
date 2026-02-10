@@ -4,12 +4,13 @@ import { format } from 'date-fns';
 import { Card, Button, Badge, Avatar, Loader, Modal } from '../components/ui';
 import { Check, X, MessageSquare } from 'lucide-react';
 import useRequestStore from '../stores/requestStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function Requests() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { myRequests, receivedRequests, isLoading, fetchMyRequests, fetchReceivedRequests, acceptRequest, rejectRequest, cancelRequest } = useRequestStore();
-    const [tab, setTab] = useState('received');
+    const [tab, setTab] = useState(searchParams.get('tab') || 'received');
     const [actionLoading, setActionLoading] = useState(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [newRequest, setNewRequest] = useState({ description: '' });
@@ -58,6 +59,12 @@ export default function Requests() {
         }
     };
 
+    const goToItem = (request) => {
+        if (request.item?._id) {
+            navigate(`/items/${request.item._id}`);
+        }
+    };
+
     const statusColors = {
         PENDING: 'warning',
         ACCEPTED: 'success',
@@ -103,7 +110,12 @@ export default function Requests() {
             ) : (
                 <div className="space-y-4">
                     {requests.map(request => (
-                        <Card key={request._id}>
+                        <Card 
+                            key={request._id} 
+                            hover
+                            onClick={() => goToItem(request)}
+                            className="cursor-pointer"
+                        >
                             <Card.Body className="flex items-start gap-4">
                                 {request.item && (
                                     <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
@@ -129,8 +141,22 @@ export default function Requests() {
                                         <Badge variant={statusColors[request.status]}>
                                             {request.status}
                                         </Badge>
+                                        {request.item?.mode && (
+                                            <Badge variant={
+                                                request.item.mode === 'RENT' ? 'primary' : 
+                                                request.item.mode === 'SELL' ? 'success' : 'warning'
+                                            }>
+                                                {request.item.mode === 'GIVE' ? 'Free' : request.item.mode}
+                                            </Badge>
+                                        )}
                                     </div>
                                     <p className="text-sm text-gray-600 line-clamp-2">{request.description}</p>
+                                    {request.proposedPrice > 0 && (
+                                        <p className="text-sm font-medium text-blue-600 mt-1">
+                                            Offered: ${request.proposedPrice}
+                                            {request.item?.mode === 'RENT' && request.rentalDays && ` for ${request.rentalDays} days`}
+                                        </p>
+                                    )}
                                     
                                     <div className="flex items-center gap-2 mt-2">
                                         <Avatar 
@@ -151,7 +177,7 @@ export default function Requests() {
                                                 size="sm"
                                                 variant="success"
                                                 title="Accept this request"
-                                                onClick={() => handleAccept(request._id)}
+                                                onClick={(e) => { e.stopPropagation(); handleAccept(request._id); }}
                                                 loading={actionLoading === request._id}
                                             >
                                                 <Check size={16} />
@@ -161,7 +187,7 @@ export default function Requests() {
                                                 size="sm"
                                                 variant="danger"
                                                 title="Reject this request"
-                                                onClick={() => handleReject(request._id)}
+                                                onClick={(e) => { e.stopPropagation(); handleReject(request._id); }}
                                                 loading={actionLoading === request._id}
                                             >
                                                 <X size={16} />
@@ -174,7 +200,7 @@ export default function Requests() {
                                             size="sm"
                                             variant="secondary"
                                             title="Cancel your request"
-                                            onClick={() => handleCancel(request._id)}
+                                            onClick={(e) => { e.stopPropagation(); handleCancel(request._id); }}
                                             loading={actionLoading === request._id}
                                         >
                                             Cancel

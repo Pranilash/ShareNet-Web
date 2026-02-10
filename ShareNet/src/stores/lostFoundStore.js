@@ -77,6 +77,26 @@ const useLostFoundStore = create((set, get) => ({
         }
     },
 
+    updatePost: async (id, formData) => {
+        try {
+            const response = await api.put(`/lost-found/${id}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const updated = response.data?.data;
+            if (updated) {
+                set({
+                    currentPost: updated,
+                    posts: get().posts.map(p => p._id === id ? updated : p),
+                    myPosts: get().myPosts.map(p => p._id === id ? updated : p)
+                });
+            }
+            return response.data;
+        } catch (error) {
+            console.error('Failed to update post:', error);
+            throw error;
+        }
+    },
+
     markResolved: async (id) => {
         try {
             const response = await api.patch(`/lost-found/${id}/resolve`);

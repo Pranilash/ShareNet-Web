@@ -193,38 +193,51 @@ export default function TransactionDetail() {
                     )}
 
                     {/* Actions */}
-                    <Card>
-                        <Card.Body className="space-y-2">
-                            {!isOwner && currentTransaction.status === 'ACTIVE' && (
-                                <Button 
-                                    onClick={handleMarkReturned} 
-                                    loading={actionLoading}
-                                    className="w-full"
-                                >
-                                    Mark as Returned
-                                </Button>
-                            )}
-                            {isOwner && currentTransaction.status === 'RETURN_PENDING' && (
-                                <Button 
-                                    onClick={handleConfirmReturn} 
-                                    loading={actionLoading}
-                                    variant="success"
-                                    className="w-full"
-                                >
-                                    Confirm Return
-                                </Button>
-                            )}
-                            {['ACTIVE', 'RETURN_PENDING'].includes(currentTransaction.status) && (
-                                <Button 
-                                    variant="danger"
-                                    onClick={() => setShowDisputeModal(true)}
-                                    className="w-full"
-                                >
-                                    Raise Dispute
-                                </Button>
-                            )}
-                        </Card.Body>
-                    </Card>
+                    {(() => {
+                        const mode = currentTransaction.item?.mode;
+                        const status = currentTransaction.status;
+                        const showMarkReturned = !isOwner && status === 'ACTIVE' && mode === 'RENT';
+                        const showConfirmReturn = isOwner && status === 'RETURN_PENDING' && mode === 'RENT';
+                        const showDispute = ['ACTIVE', 'RETURN_PENDING'].includes(status);
+                        const hasActions = showMarkReturned || showConfirmReturn || showDispute;
+
+                        if (!hasActions) return null;
+
+                        return (
+                            <Card>
+                                <Card.Body className="space-y-2">
+                                    {showMarkReturned && (
+                                        <Button 
+                                            onClick={handleMarkReturned} 
+                                            loading={actionLoading}
+                                            className="w-full"
+                                        >
+                                            Mark as Returned
+                                        </Button>
+                                    )}
+                                    {showConfirmReturn && (
+                                        <Button 
+                                            onClick={handleConfirmReturn} 
+                                            loading={actionLoading}
+                                            variant="success"
+                                            className="w-full"
+                                        >
+                                            Confirm Return
+                                        </Button>
+                                    )}
+                                    {showDispute && (
+                                        <Button 
+                                            variant="danger"
+                                            onClick={() => setShowDisputeModal(true)}
+                                            className="w-full"
+                                        >
+                                            Raise Dispute
+                                        </Button>
+                                    )}
+                                </Card.Body>
+                            </Card>
+                        );
+                    })()}
                 </div>
 
                 {/* Chat */}

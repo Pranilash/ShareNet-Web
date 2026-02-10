@@ -100,6 +100,30 @@ export const useClaimChat = (claimId) => {
         }
     }, [chatId]);
 
+    const sendImage = useCallback(async (file) => {
+        if (!chatId || !file) return;
+        
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('content', 'Sent an image');
+            formData.append('messageType', 'IMAGE');
+            
+            const response = await api.post(`/claim-chats/${chatId}/messages`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const newMessage = response.data.data;
+            setMessages(prev => {
+                if (prev.some(m => m._id === newMessage._id)) return prev;
+                return [...prev, newMessage];
+            });
+            return newMessage;
+        } catch (error) {
+            console.error('Failed to send image:', error);
+            throw error;
+        }
+    }, [chatId]);
+
     const sendLocation = useCallback(async (location) => {
         if (!chatId) return;
         
@@ -190,6 +214,7 @@ export const useClaimChat = (claimId) => {
         typingUser,
         chat,
         sendMessage,
+        sendImage,
         sendLocation,
         proposeMeetup,
         respondToMeetup,

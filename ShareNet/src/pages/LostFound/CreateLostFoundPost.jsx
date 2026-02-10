@@ -20,10 +20,10 @@ const CATEGORIES = [
 ];
 
 const URGENCY_LEVELS = [
-    { value: 'low', label: 'Low', description: 'Not urgent, can wait a few days', color: 'gray' },
-    { value: 'medium', label: 'Medium', description: 'Would like to find it soon', color: 'yellow' },
-    { value: 'high', label: 'High', description: 'Need it back urgently', color: 'orange' },
-    { value: 'critical', label: 'Critical', description: 'Essential item, need it immediately', color: 'red' }
+    { value: 'low', label: 'Low', description: 'Not urgent, can wait a few days', activeClasses: 'border-gray-500 bg-gray-50 text-gray-700', dotColor: 'bg-gray-500', hoverClasses: 'hover:border-gray-300' },
+    { value: 'medium', label: 'Medium', description: 'Would like to find it soon', activeClasses: 'border-yellow-500 bg-yellow-50 text-yellow-700', dotColor: 'bg-yellow-500', hoverClasses: 'hover:border-yellow-300' },
+    { value: 'high', label: 'High', description: 'Need it back urgently', activeClasses: 'border-orange-500 bg-orange-50 text-orange-700', dotColor: 'bg-orange-500', hoverClasses: 'hover:border-orange-300' },
+    { value: 'critical', label: 'Critical', description: 'Essential item, need it immediately', activeClasses: 'border-red-500 bg-red-50 text-red-700', dotColor: 'bg-red-500', hoverClasses: 'hover:border-red-300' }
 ];
 
 const STEPS = [
@@ -390,11 +390,11 @@ export default function CreateLostFoundPost({ isOpen, onClose, onSuccess }) {
                                         className={`
                                             p-3 rounded-lg border-2 transition-colors text-center
                                             ${formData.urgency === level.value
-                                                ? `border-${level.color}-500 bg-${level.color}-50`
-                                                : 'border-gray-200 hover:border-gray-300'}
+                                                ? level.activeClasses
+                                                : `border-gray-200 ${level.hoverClasses}`}
                                         `}
                                     >
-                                        <div className={`w-3 h-3 rounded-full bg-${level.color}-500 mx-auto mb-1`} />
+                                        <div className={`w-3 h-3 rounded-full ${level.dotColor} mx-auto mb-1`} />
                                         <span className="text-sm font-medium">{level.label}</span>
                                     </button>
                                 ))}

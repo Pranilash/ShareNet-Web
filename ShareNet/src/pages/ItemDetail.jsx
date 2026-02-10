@@ -104,9 +104,10 @@ export default function ItemDetail() {
             }
 
             await createRequest(requestData);
-            toast.success('Request sent successfully!');
+            toast.success('Request sent! Check your Sent Requests to track it.');
             setShowRequestModal(false);
             resetRequestForm();
+            navigate('/requests?tab=sent');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to send request');
         } finally {

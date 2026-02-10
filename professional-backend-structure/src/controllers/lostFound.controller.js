@@ -83,6 +83,67 @@ const createPost = asyncHandler(async (req, res) => {
     );
 });
 
+const updatePost = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const { 
+        title, description, location, category, 
+        verificationQuestions, reward, lastSeenDate, 
+        contactPreference, urgency 
+    } = req.body;
+
+    const post = await LostFound.findById(postId);
+
+    if (!post) {
+        throw new ApiError(404, "Post not found");
+    }
+
+    if (post.user.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not authorized to update this post");
+    }
+
+    if (post.isResolved) {
+        throw new ApiError(400, "Cannot edit a resolved post");
+    }
+
+    if (title) post.title = title;
+    if (description) post.description = description;
+    if (location) post.location = location;
+    if (category) post.category = category;
+    if (urgency) post.urgency = urgency.toUpperCase();
+    if (contactPreference) post.contactPreference = contactPreference.toUpperCase();
+    if (lastSeenDate) post.lastSeenDate = lastSeenDate;
+
+    if (verificationQuestions) {
+        try {
+            post.verificationQuestions = typeof verificationQuestions === 'string' 
+                ? JSON.parse(verificationQuestions) 
+                : verificationQuestions;
+        } catch (e) {}
+    }
+
+    if (reward) {
+        try {
+            post.reward = typeof reward === 'string' ? JSON.parse(reward) : reward;
+        } catch (e) {}
+    }
+
+    if (req.file) {
+        const uploaded = await uploadOnCloudinary(req.file.path);
+        if (uploaded) {
+            post.photo = uploaded.url;
+        }
+    }
+
+    await post.save();
+
+    const updatedPost = await LostFound.findById(post._id)
+        .populate('user', 'fullName username avatar campus');
+
+    return res.status(200).json(
+        new ApiResponse(200, updatedPost, "Post updated successfully")
+    );
+});
+
 const getPosts = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, type, status, category, urgency } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -768,6 +829,7 @@ const getClaimById = asyncHandler(async (req, res) => {
 
 export {
     createPost,
+    updatePost,
     getPosts,
     getMyPosts,
     getPostDetail,

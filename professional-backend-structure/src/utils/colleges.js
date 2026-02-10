@@ -100,6 +100,9 @@ const COLLEGES = [
     { name: "PES University", domain: "pes.edu" },
     { name: "Christ University", domain: "christuniversity.in" },
     { name: "Presidency University", domain: "presidencyuniversity.in" },
+
+    // Demo / Testing
+    { name: "ShareNet Demo College", domain: "gmail.com", isDemo: true },
 ];
 
 const VALID_EDUCATIONAL_SUFFIXES = [".edu", ".ac.in", ".edu.in"];
@@ -135,6 +138,13 @@ const isValidCollegeEmail = (email) => {
     return VALID_EDUCATIONAL_SUFFIXES.some((suffix) => domain.endsWith(suffix));
 };
 
+const isDemoEmail = (email) => {
+    if (!email) return false;
+    const domain = email.toLowerCase().trim().split("@")[1];
+    const college = getCollegeByDomain(domain);
+    return college?.isDemo === true;
+};
+
 const getAllColleges = () => [...COLLEGES];
 
 export {
@@ -142,5 +152,6 @@ export {
     getCollegeByDomain,
     getCollegeByEmail,
     isValidCollegeEmail,
+    isDemoEmail,
     getAllColleges,
 };

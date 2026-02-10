@@ -11,7 +11,8 @@ export default function ClaimChatBox({ claimId, claim }) {
         messages, 
         isLoading, 
         typingUser, 
-        sendMessage, 
+        sendMessage,
+        sendImage,
         sendLocation,
         proposeMeetup,
         respondToMeetup,
@@ -64,17 +65,15 @@ export default function ClaimChatBox({ claimId, claim }) {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('image', file);
-
         setSending(true);
         try {
-            await sendMessage(URL.createObjectURL(file), 'IMAGE');
+            await sendImage(file);
             toast.success('Image sent');
         } catch (error) {
             toast.error('Failed to send image');
         } finally {
             setSending(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
