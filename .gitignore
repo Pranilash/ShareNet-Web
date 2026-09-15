@@ -1,0 +1,25 @@
+# Dependency directories
+node_modules/
+
+# Agent plugins & local tool configurations (local only)
+.agents/
+.archify/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment and sensitive keys
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Test and scratch output
+.nyc_output/
+coverage/
