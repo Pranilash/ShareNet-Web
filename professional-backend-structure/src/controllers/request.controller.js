@@ -456,9 +456,13 @@ const createCounterOffer = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Cannot create counter offer for this request");
     }
 
+    const normalizedDuration = typeof duration === 'number'
+        ? { days: duration }
+        : (duration && typeof duration === 'object' ? duration : { days: Number(duration) || 0 });
+
     request.counterOffer = {
         price,
-        duration,
+        duration: normalizedDuration,
         message,
         proposedBy: req.user._id,
         status: 'PENDING'
@@ -528,7 +532,7 @@ const respondToCounterOffer = asyncHandler(async (req, res) => {
             request: request._id,
             mode: request.item.mode,
             agreedPrice: request.counterOffer.price || request.item.price,
-            agreedDuration: request.counterOffer.duration
+            agreedDuration: typeof request.counterOffer.duration === 'object' && request.counterOffer.duration !== null ? (request.counterOffer.duration.days || 1) : (Number(request.counterOffer.duration) || 1)
         });
 
         await Item.findByIdAndUpdate(request.item._id, { isAvailable: false });
@@ -682,6 +686,47 @@ const confirmPickupDetails = asyncHandler(async (req, res) => {
     );
 });
 
+const updateClaimStatus = asyncHandler(async (req, res) => {
+    const { claimId } = req.params;
+    const { status } = req.body;
+
+    if (!['PENDING_PICKUP', 'COMPLETED', 'CANCELLED'].includes(status)) {
+        throw new ApiError(400, "Invalid claim status");
+    }
+
+    const item = await Item.findOne({ "claimedBy._id": claimId });
+    if (!item) {
+        throw new ApiError(404, "Claim not found");
+    }
+
+    if (item.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "Only the item owner can update claim status");
+    }
+
+    const claim = item.claimedBy.id(claimId);
+    if (!claim) {
+        throw new ApiError(404, "Claim not found");
+    }
+
+    claim.status = status;
+    if (status === 'COMPLETED') {
+        item.isAvailable = false;
+    }
+    await item.save();
+
+    await createNotificationHelper(
+        claim.user,
+        'CLAIM_STATUS_UPDATED',
+        `Your claim for "${item.title}" status changed to ${status}`,
+        item._id,
+        'Item'
+    );
+
+    return res.status(200).json(
+        new ApiResponse(200, claim, "CLAIM STATUS UPDATED SUCCESSFULLY")
+    );
+});
+
 export {
     createRequest,
     getMyRequests,
@@ -697,5 +742,6 @@ export {
     respondToCounterOffer,
     getItemRequests,
     proposePickupDetails,
-    confirmPickupDetails
+    confirmPickupDetails,
+    updateClaimStatus
 };

@@ -1,13 +1,25 @@
 import { Resend } from "resend"
 import crypto from "crypto"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const getResendClient = () => {
+    if (!process.env.RESEND_API_KEY) {
+        console.warn("RESEND_API_KEY is not set. Running in development mode with simulated email delivery.");
+        return null;
+    }
+    return new Resend(process.env.RESEND_API_KEY);
+};
 
 const generateOTP = () => {
     return crypto.randomInt(100000, 999999).toString()
 }
 
 const sendOTPEmail = async (email, otp) => {
+    const resend = getResendClient();
+    if (!resend) {
+        console.log(`[DEV EMAIL SIMULATION] Verification OTP for ${email}: ${otp}`);
+        return { id: "simulated_otp_email_id" };
+    }
+
     const { data, error } = await resend.emails.send({
         from: process.env.RESEND_FROM || "ShareNet <onboarding@resend.dev>",
         to: [email],

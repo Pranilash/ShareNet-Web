@@ -10,19 +10,22 @@ import {
     getRecommendations
 } from "../controllers/item.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { VerifyJWT } from "../middlewares/auth.middleware.js";
+import { VerifyJWT, optionalVerifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-router.use(VerifyJWT);
+// Protected static subpaths (MUST be declared before parameterized /:itemId)
+router.route("/my-items").get(VerifyJWT, getMyItems);
+router.route("/recommendations").get(VerifyJWT, getRecommendations);
+router.route("/").post(VerifyJWT, upload.array("photos", 5), createItem);
 
-router.route("/").post(upload.array("photos", 5), createItem);
-router.route("/").get(getAllItems);
-router.route("/my-items").get(getMyItems);
-router.route("/recommendations").get(getRecommendations);
-router.route("/:itemId").get(getItemById);
-router.route("/:itemId").patch(updateItem);
-router.route("/:itemId").delete(deleteItem);
-router.route("/:itemId/availability").patch(markUnavailable);
+// Protected parameterized routes
+router.route("/:itemId").patch(VerifyJWT, updateItem);
+router.route("/:itemId").delete(VerifyJWT, deleteItem);
+router.route("/:itemId/availability").patch(VerifyJWT, markUnavailable);
+
+// Public / optionally authenticated routes
+router.route("/").get(optionalVerifyJWT, getAllItems);
+router.route("/:itemId").get(optionalVerifyJWT, getItemById);
 
 export default router;

@@ -359,7 +359,7 @@ const raiseDispute = asyncHandler(async (req, res) => {
         'Transaction'
     );
 
-    await updateTrustScoreHelper(req.user._id, 'DISPUTE');
+    await updateTrustScoreHelper(otherParty, 'DISPUTE');
 
     return res.status(200).json(
         new ApiResponse(200, transaction, "DISPUTE RAISED SUCCESSFULLY")

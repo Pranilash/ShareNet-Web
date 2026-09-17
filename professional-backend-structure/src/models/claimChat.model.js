@@ -56,6 +56,13 @@ const claimMessageSchema = new Schema(
             enum: ['TEXT', 'IMAGE', 'LOCATION', 'MEETUP_PROPOSAL', 'VERIFICATION_REQUEST', 'SYSTEM'],
             default: 'TEXT'
         },
+        meetupStatus: {
+            type: String,
+            enum: ['PENDING', 'ACCEPTED', 'DECLINED'],
+            default: function() {
+                return this.messageType === 'MEETUP_PROPOSAL' ? 'PENDING' : undefined;
+            }
+        },
         metadata: {
             imageUrl: String,
             location: {

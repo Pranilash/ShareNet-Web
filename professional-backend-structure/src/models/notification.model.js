@@ -11,10 +11,16 @@ const notificationSchema = new Schema(
         type: {
             type: String,
             enum: [
-                // Transaction notifications
+                // Transaction & Request notifications
                 'REQUEST_RECEIVED', 
                 'REQUEST_ACCEPTED', 
                 'REQUEST_REJECTED', 
+                'COUNTER_OFFER_RECEIVED',
+                'COUNTER_OFFER_ACCEPTED',
+                'COUNTER_OFFER_REJECTED',
+                'PICKUP_PROPOSED',
+                'PICKUP_CONFIRMED',
+                'CLAIM_STATUS_UPDATED',
                 'AGREEMENT_PROPOSED', 
                 'AGREEMENT_CONFIRMED', 
                 'RETURN_PENDING', 
@@ -26,6 +32,7 @@ const notificationSchema = new Schema(
                 // Lost & Found notifications
                 'LOST_FOUND_CLAIM',
                 'LOST_FOUND_VERIFICATION',
+                'LOST_FOUND_VERIFICATION_SUBMITTED',
                 'LOST_FOUND_VERIFIED',
                 'LOST_FOUND_REJECTED',
                 'LOST_FOUND_MEETUP',
