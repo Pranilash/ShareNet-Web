@@ -1,0 +1,91 @@
+name: ShareNet Continuous Integration
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Backend API & 55-Endpoint Integration Suite
+  # -------------------------------------------------------------
+  backend-test:
+    name: Backend API & Endpoints
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: professional-backend-structure
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: professional-backend-structure/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify AST Syntax (All Core Files)
+        run: |
+          node --check src/index.js
+          node --check src/app.js
+          node --check src/socket.js
+          node --check src/utils/email.js
+          node --check src/utils/cloudinary.js
+          node --check src/middlewares/auth.middleware.js
+
+      - name: Run 55-Endpoint Integration Test Suite
+        env:
+          TEST_PORT: 8008
+          MONGODB_URI: mongodb://localhost:27017/sharenet_ci_test
+          ACCESS_TOKEN_SECRET: ci_access_token_secret_xyz789
+          REFRESH_TOKEN_SECRET: ci_refresh_token_secret_xyz789
+          CORS_ORIGIN: http://localhost:5173
+        run: npm test
+
+  # -------------------------------------------------------------
+  # Job 2: Frontend Production Build & Bundle Verification
+  # -------------------------------------------------------------
+  frontend-build:
+    name: Frontend Vite Production Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ShareNet
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: ShareNet/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Production Assets
+        run: npm run build
+
