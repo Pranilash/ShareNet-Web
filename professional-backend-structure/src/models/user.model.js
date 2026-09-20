@@ -91,9 +91,9 @@ userSchema.methods.generateAccessToken = function () {
             college: this.college,
             collegeDomain: this.collegeDomain
         },
-        process.env.ACCESS_TOKEN_SECRET,
+        process.env.ACCESS_TOKEN_SECRET || "default_access_secret_123",
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "1d"
         }
     )
 }
@@ -103,9 +103,9 @@ userSchema.methods.generateRefreshToken = function () {
         {
             _id: this._id,
         },
-        process.env.REFRESH_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET || "default_refresh_secret_123",
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "10d"
         }
     )
 }

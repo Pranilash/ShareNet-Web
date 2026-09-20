@@ -18,6 +18,11 @@ import { OfferChat } from './src/models/offerChat.model.js';
 import { app } from './src/app.js';
 import { initializeSocket } from './src/socket.js';
 
+process.env.ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || 'secret123';
+process.env.ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '1d';
+process.env.REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'refresh123';
+process.env.REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '10d';
+
 const PORT = process.env.TEST_PORT || 8008;
 const BASE_URL = `http://127.0.0.1:${PORT}/api/v1`;
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/sharenet';
@@ -74,7 +79,7 @@ async function runTestSuite() {
 
   const server = http.createServer(app);
   initializeSocket(server);
-  await new Promise(resolve => server.listen(PORT, resolve));
+  await new Promise(resolve => server.listen(PORT, '127.0.0.1', resolve));
   console.log(`Test API server running on port ${PORT}\n`);
 
   try {
