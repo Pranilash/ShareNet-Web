@@ -11,11 +11,13 @@
 
 <p align="center">
   <a href="https://sharenet-web-1.onrender.com"><img src="https://img.shields.io/badge/🚀_LIVE_DEMO-sharenet--web--1.onrender.com-7c3aed?style=for-the-badge" alt="Live Demo" /></a>
+  <a href="https://hackvision.devpost.com/project-gallery"><img src="https://img.shields.io/badge/🏆_WINNER-HackVision_2026-f59e0b?style=for-the-badge" alt="HackVision Winner" /></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/Pranilash/ShareNet-Web/actions/workflows/ci.yml"><img src="https://github.com/Pranilash/ShareNet-Web/actions/workflows/ci.yml/badge.svg" alt="CI Pipeline" /></a>
   <img src="https://img.shields.io/badge/Tests-55%2F55_Passed-success?logo=github-actions&logoColor=white" alt="Endpoint Tests" />
+  <a href="https://devpost.com/software/sharenet"><img src="https://img.shields.io/badge/Devpost-ShareNet-003E54?logo=devpost&logoColor=white" alt="Devpost" /></a>
   <img src="https://img.shields.io/badge/React-18.2-61DAFB?logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/Express-4.21-000000?logo=express&logoColor=white" alt="Express" />
@@ -59,6 +61,8 @@
 
 ## 🔗 Live Demo & Evaluator Access
 
+> 🏆 **Hackathon Winner**: Officially awarded at [HackVision](https://hackvision.devpost.com/project-gallery). Explore our [Devpost Project Submission](https://devpost.com/software/sharenet).
+>
 > **Production Application:** [https://sharenet-web-1.onrender.com](https://sharenet-web-1.onrender.com)
 >
 > **Note for Judges & Evaluators:** Gmail (`@gmail.com`) registration is temporarily permitted for evaluation purposes, allowing reviewers to test and experience the full platform lifecycle without requiring an active `.edu` or `.ac.in` institutional email address. In strict production mode, the platform restricts registration exclusively to verified campus email domains.
