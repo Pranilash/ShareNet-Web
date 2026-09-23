@@ -5,8 +5,8 @@
 <h1 align="center">ShareNet</h1>
 
 <p align="center">
-  <strong>ML-Powered Campus Sharing Economy Platform</strong><br/>
-  A production-grade, real-time marketplace where verified college students rent, sell, give, recover lost items, and fulfill community requests — powered by intelligent recommendations, behavioral trust scores, and an event-driven architecture.
+  <strong>Multi-Tenant Campus Resource Sharing & Circular Economy Platform</strong><br/>
+  A production-grade, real-time marketplace where verified college students rent, sell, give, recover lost items, and fulfill community requests — powered by behavior-informed recommendation scoring, atomic concurrency controls, runtime Zod validation, and an event-driven architecture.
 </p>
 
 <p align="center">
@@ -16,7 +16,8 @@
 
 <p align="center">
   <a href="https://github.com/Pranilash/ShareNet-Web/actions/workflows/ci.yml"><img src="https://github.com/Pranilash/ShareNet-Web/actions/workflows/ci.yml/badge.svg" alt="CI Pipeline" /></a>
-  <img src="https://img.shields.io/badge/Tests-55%2F55_Passed-success?logo=github-actions&logoColor=white" alt="Endpoint Tests" />
+  <img src="https://img.shields.io/badge/Tests-74%2F74_Passed-success?logo=github-actions&logoColor=white" alt="Automated Tests" />
+  <img src="https://img.shields.io/badge/Zod-Runtime_Validation-3E67B1?logo=zod&logoColor=white" alt="Zod" />
   <a href="https://devpost.com/software/sharenet"><img src="https://img.shields.io/badge/Devpost-ShareNet-003E54?logo=devpost&logoColor=white" alt="Devpost" /></a>
   <img src="https://img.shields.io/badge/React-18.2-61DAFB?logo=react&logoColor=white" alt="React" />
   <img src="https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white" alt="Node.js" />
@@ -39,18 +40,18 @@
 - [Multi-Tenant Campus Isolation](#-multi-tenant-campus-isolation)
 - [Platform Capabilities & Highlights](#-platform-capabilities--highlights)
 - [Feature Deep Dive](#-feature-deep-dive)
-  - [1. ML-Powered Recommendation Engine](#1-ml-powered-recommendation-engine)
-  - [2. Three-Mode Marketplace with Instant Claims](#2-three-mode-marketplace-with-instant-claims)
+  - [1. Multi-Signal Behavioral Recommendation Engine](#1-multi-signal-behavioral-recommendation-engine)
+  - [2. Three-Mode Marketplace with Concurrency-Safe Instant Claims](#2-three-mode-marketplace-with-concurrency-safe-instant-claims)
   - [3. Anti-Fraud Lost & Found with Security Verification](#3-anti-fraud-lost--found-with-security-verification)
   - [4. Community Wanted Board (Reverse Marketplace)](#4-community-wanted-board-reverse-marketplace)
   - [5. Event-Driven Real-Time WebSocket Mesh](#5-event-driven-real-time-websocket-mesh)
   - [6. Behavioral Trust Score Engine](#6-behavioral-trust-score-engine)
-  - [7. Escrow Transaction Lifecycle & Dispute Resolution](#7-escrow-transaction-lifecycle--dispute-resolution)
+  - [7. 6-Stage Transaction Lifecycle & State Machine](#7-6-stage-transaction-lifecycle--state-machine)
   - [8. College-Scoped OTP Verification](#8-college-scoped-otp-verification)
 - [System Architecture](#-system-architecture)
 - [Project Directory Structure](#-project-directory-structure)
 - [Comprehensive API Surface (55 Tested Endpoints)](#-comprehensive-api-surface-55-tested-endpoints)
-- [Automated Testing & CI/CD Pipeline](#-automated-testing--cicd-pipeline)
+- [Automated Testing & Concurrency Verification (74 Tests)](#-automated-testing--concurrency-verification-74-tests)
 - [Local Development Setup](#-local-development-setup)
 - [Deployment Configuration](#-deployment-configuration)
 - [Comparison: ShareNet vs Generic Platforms](#-comparison-sharenet-vs-generic-platforms)
@@ -145,9 +146,9 @@ ShareNet operates as a **single-deployment, multi-tenant platform** where each u
 
 ## 🔍 Feature Deep Dive
 
-### 1. ML-Powered Recommendation Engine
+### 1. Multi-Signal Behavioral Recommendation Engine
 
-ShareNet implements a multi-signal scoring model that personalizes item discovery for every authenticated user:
+ShareNet implements a behavior-informed multi-signal scoring model that personalizes item discovery for every authenticated user:
 
 $$\text{Score} = \text{CategoryAffinity}(+3) + \text{OwnerTrustSignal}(+1) + \text{ModeRelevance}(+1) + \text{RecencyBoost}(+2)$$
 
@@ -167,14 +168,15 @@ $$\text{Score} = \text{CategoryAffinity}(+3) + \text{OwnerTrustSignal}(+1) + \te
 
 ---
 
-### 2. Three-Mode Marketplace with Instant Claims
+### 2. Three-Mode Marketplace with Concurrency-Safe Instant Claims
 
 Each marketplace listing operates under one of three designated models:
 
 - **Rent:** Daily/weekly rental rates with specified duration and mandatory return timelines.
 - **Sell:** Direct peer-to-peer purchase with transparent price discovery.
 - **Give:** Community donations and giveaways.
-  - **Instant Claim Mode:** Owners can enable instant queuing where students join a FIFO queue without waiting for manual owner approval. The item displays "Fully Claimed" once capacity is reached.
+  - **Atomic Instant Claim:** Owners can enable instant queuing with `maxClaimers` limits. The claim allocation is executed as an **authoritative atomic conditional update** in MongoDB (`findOneAndUpdate` with `$expr` capacity checks and duplicate claim exclusion). This eliminates read-modify-write race conditions under heavy concurrent access without requiring external distributed lock infrastructure.
+  - **Compensating Rollbacks:** If auxiliary request record generation fails, the system triggers an atomic compensating pull, preventing orphaned claims and maintaining absolute database consistency.
   - **Counter-Offer Negotiation:** Rent/sell proposals support iterative counter-offers with complete audit trails of negotiated prices and durations.
 
 ---
@@ -239,9 +241,9 @@ Every new student starts at **50 / 100**. High-trust users receive priority rank
 
 ---
 
-### 7. Escrow Transaction Lifecycle & Dispute Resolution
+### 7. 6-Stage Transaction Lifecycle & State Machine
 
-Every transaction progresses through an auditable, deterministic state machine:
+Every transaction progresses through an auditable, deterministic contract state machine:
 
 ```
 ┌───────────┐      ┌──────────┐      ┌────────────────────┐      ┌──────────┐
@@ -260,9 +262,9 @@ Every transaction progresses through an auditable, deterministic state machine:
                            └────────────────┘                          └──────────────┘
 ```
 
-- **Dual-Party Agreement:** Owner defines final terms (price, duration, start date, security guidelines). Both parties must mutually confirm before the transaction becomes `ACTIVE`.
+- **Dual-Party Agreement:** Owner defines final terms (price, duration, start date, security guidelines). Both parties must mutually confirm before the transaction transitions to `ACTIVE`.
 - **Automated Alerts:** Daily background cron jobs evaluate active transactions and issue alerts at $T-3$ days, $T-1$ day, and on due dates.
-- **Dispute Resolution:** In the event of damage or non-return, either party can submit formal dispute statements for administrative review.
+- **Dispute Arbitration:** In the event of damage or non-return, either party can submit formal dispute statements for administrative review and behavioral trust score penalties.
 
 ---
 
@@ -387,14 +389,14 @@ All 55 endpoints are systematically tested and verified across controllers:
 | `POST` | `/api/v1/requests` | Protected | Submit rent, buy, or borrow request for an item |
 | `GET` | `/api/v1/requests/item/:itemId` | Protected | View all pending requests on an item |
 | `GET` | `/api/v1/requests/my-requests` | Protected | View all outbound requests made by user |
-| `PATCH` | `/api/v1/requests/:requestId/accept` | Protected | Accept a request and initialize transaction escrow |
+| `PATCH` | `/api/v1/requests/:requestId/accept` | Protected | Accept a request and initialize transaction agreement |
 | `PATCH` | `/api/v1/requests/:requestId/reject` | Protected | Decline a request |
-| `POST` | `/api/v1/requests/:itemId/instant-claim` | Protected | Join giveaway queue for free items |
+| `POST` | `/api/v1/requests/:itemId/instant-claim` | Protected | Concurrency-safe atomic claim for giveaway items |
 | `GET` | `/api/v1/requests/:itemId/claim-queue` | Protected | View current claim queue status |
 | `POST` | `/api/v1/requests/:requestId/counter-offer` | Protected | Propose modified pricing or rental terms |
 | `PATCH` | `/api/v1/requests/:requestId/pickup-details` | Protected | Specify physical pickup time and campus location |
 
-### 4. Escrow Transactions (8 Endpoints)
+### 4. Transactions & State Machine (8 Endpoints)
 | Method | Endpoint | Protection | Description |
 |:---|:---|:---|:---|
 | `GET` | `/api/v1/transactions` | Protected | List all active, pending, and completed transactions |
@@ -462,46 +464,57 @@ All 55 endpoints are systematically tested and verified across controllers:
 
 ---
 
-## 🧪 Automated Testing & CI/CD Pipeline
+## 🧪 Automated Testing & Concurrency Verification (74 Tests)
 
-ShareNet includes an automated end-to-end integration test suite and a GitHub Actions continuous integration pipeline.
+ShareNet features an end-to-end automated testing architecture backed by a GitHub Actions continuous integration pipeline:
 
 ```
  GitHub Actions CI Runner (Ubuntu Latest · Node.js 22)
  ├── 1. Checkout repository
  ├── 2. Spin up MongoDB 7.0 Service Container (:27017)
- ├── 3. Install backend & frontend dependencies
- ├── 4. Static syntax and import validation
- ├── 5. Execute 55-endpoint automated test suite
- └── 6. Build frontend production bundle (Vite)
+ ├── 3. Install backend & frontend dependencies (npm ci)
+ ├── 4. Static AST syntax validation across all core controllers & middleware
+ ├── 5. Execute 55-endpoint API integration test suite
+ ├── 6. Execute 19-scenario atomic concurrency & Zod boundary verification suite
+ └── 7. Build frontend production bundle (Vite)
 ```
 
-### Running the Test Suite Locally
-
-The automated test runner spins up an Express test instance, connects to your local or Atlas MongoDB, runs all 55 integration tests in sequential dependency order, and generates a formatted results table:
+### Running the Test Suites Locally
 
 ```bash
 cd professional-backend-structure
 npm test
 ```
 
-**Test Execution Output:**
+**Test Execution Summary (100% Green across 74 automated tests):**
 ```
 ============================================================
-              SHARENET AUTOMATED TEST SUITE
+              SHARENET AUTOMATED TEST SUITES
 ============================================================
+Part 1: 55-Endpoint Integration Suite
 ✓ Health Check: PASS (12ms)
 ✓ User Auth (Register, Login, OTP, Profile): 8/8 PASS
-✓ Items & ML Recommendations: 8/8 PASS
+✓ Items & Recommendation Scoring: 8/8 PASS
 ✓ Requests, Claims & Negotiation: 8/8 PASS
-✓ Transactions & Escrow Agreements: 8/8 PASS
+✓ Transactions & Digital Agreements: 8/8 PASS
 ✓ Real-Time Messages: 2/2 PASS
 ✓ Lost & Found Verification Challenge: 8/8 PASS
 ✓ Wanted Board & Bid Coordination: 8/8 PASS
 ✓ Rich Meetup & Location Chats: 8/8 PASS
 ✓ System Notifications: 4/4 PASS
+--> 55/55 API ENDPOINTS PASSED (0 FAILURES)
+
+Part 2: 19-Scenario Atomic Concurrency & Invariant Suite
+✓ 20 concurrent users competing for 1 slot: exactly 1 succeeds, 19 rejected (400)
+✓ 20 concurrent users competing for 3 slots: exactly 3 succeed, 17 rejected (400)
+✓ Same user sending 5 simultaneous requests: exactly 1 succeeds, 4 rejected (400)
+✓ Claim cancellation restores availability and capacity dynamically
+✓ Re-claim on cancelled capacity succeeds
+✓ Zod runtime parameter validation: invalid ObjectId rejected with 400
+✓ Zod runtime body schema validation: invalid payloads rejected with 400
+--> 19/19 CONCURRENCY & VALIDATION TESTS PASSED (0 FAILURES)
 ============================================================
-ALL 55 TESTS COMPLETED: 55 PASSED / 0 FAILED (100% SUCCESS)
+TOTAL TESTS COMPLETED: 74 PASSED / 0 FAILED (100% SUCCESS)
 ============================================================
 ```
 

@@ -15,6 +15,7 @@ const notificationSchema = new Schema(
                 'REQUEST_RECEIVED', 
                 'REQUEST_ACCEPTED', 
                 'REQUEST_REJECTED', 
+                'ITEM_CLAIMED',
                 'COUNTER_OFFER_RECEIVED',
                 'COUNTER_OFFER_ACCEPTED',
                 'COUNTER_OFFER_REJECTED',

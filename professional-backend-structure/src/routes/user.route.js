@@ -7,16 +7,23 @@ import {
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { VerifyJWT } from "../middlewares/auth.middleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import {
+    registerUserSchema,
+    loginUserSchema,
+    sendOtpSchema,
+    verifyOtpSchema
+} from "../validators/user.validator.js";
 
 const router = Router();
 
 // Public routes
-router.route("/register").post(upload.single("avatar"), registerUser);
-router.route("/login").post(loginUser);
+router.route("/register").post(upload.single("avatar"), validate(registerUserSchema), registerUser);
+router.route("/login").post(validate(loginUserSchema), loginUser);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/colleges").get(getColleges);
-router.route("/send-otp").post(sendOTP);
-router.route("/verify-otp").post(verifyOTP);
+router.route("/send-otp").post(validate(sendOtpSchema), sendOTP);
+router.route("/verify-otp").post(validate(verifyOtpSchema), verifyOTP);
 
 // Protected routes
 router.route("/logout").post(VerifyJWT, logOutUser);

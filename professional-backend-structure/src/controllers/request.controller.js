@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
@@ -297,73 +298,148 @@ const getActiveRequests = asyncHandler(async (req, res) => {
 const instantClaim = asyncHandler(async (req, res) => {
     const { itemId } = req.params;
 
-    const item = await Item.findById(itemId);
-
-    if (!item) {
-        throw new ApiError(404, "Item not found");
+    if (!mongoose.Types.ObjectId.isValid(itemId)) {
+        throw new ApiError(400, "Invalid item ID format");
     }
 
-    if (!item.instantClaim) {
-        throw new ApiError(400, "This item does not support instant claim");
-    }
+    const userId = req.user._id;
 
-    if (item.mode !== 'GIVE') {
-        throw new ApiError(400, "Instant claim is only available for free items");
-    }
-
-    if (!item.isAvailable) {
-        throw new ApiError(400, "Item is no longer available");
-    }
-
-    if (item.owner.toString() === req.user._id.toString()) {
-        throw new ApiError(400, "You cannot claim your own item");
-    }
-
-    const existingClaim = item.claimedBy.find(
-        claim => claim.user.toString() === req.user._id.toString() && claim.status !== 'CANCELLED'
-    );
-
-    if (existingClaim) {
-        throw new ApiError(400, "You have already claimed this item");
-    }
-
-    const activeClaims = item.claimedBy.filter(claim => claim.status === 'PENDING_PICKUP').length;
-    if (activeClaims >= item.maxClaimers) {
-        throw new ApiError(400, "Maximum claimers reached for this item");
-    }
-
-    item.claimedBy.push({
-        user: req.user._id,
+    // ATOMIC CONDITIONAL UPDATE:
+    // Serialized write at storage engine level to eliminate read-modify-write race conditions.
+    // Invariants enforced atomically:
+    // 1. Item exists, isAvailable: true, instantClaim: true, mode: 'GIVE'.
+    // 2. Requester is not owner (owner !== userId).
+    // 3. Requester does not already have an active claim.
+    // 4. Current count of active claims ('PENDING_PICKUP') < maxClaimers.
+    const claimEntry = {
+        user: userId,
         claimedAt: new Date(),
         status: 'PENDING_PICKUP'
-    });
+    };
 
-    if (item.claimedBy.filter(c => c.status === 'PENDING_PICKUP').length >= item.maxClaimers) {
-        item.isAvailable = false;
-    }
+    const filter = {
+        _id: itemId,
+        instantClaim: true,
+        mode: 'GIVE',
+        isAvailable: true,
+        owner: { $ne: userId },
+        claimedBy: {
+            $not: {
+                $elemMatch: {
+                    user: userId,
+                    status: { $ne: 'CANCELLED' }
+                }
+            }
+        },
+        $expr: {
+            $lt: [
+                {
+                    $size: {
+                        $filter: {
+                            input: { $ifNull: ["$claimedBy", []] },
+                            as: "claim",
+                            cond: { $eq: ["$$claim.status", "PENDING_PICKUP"] }
+                        }
+                    }
+                },
+                "$maxClaimers"
+            ]
+        }
+    };
 
-    await item.save();
-
-    const request = await Request.create({
-        item: itemId,
-        requester: req.user._id,
-        owner: item.owner,
-        description: 'Instant claim for free item',
-        requestType: 'INSTANT_CLAIM',
-        status: 'ACCEPTED',
-        priority: activeClaims + 1
-    });
-
-    await createNotificationHelper(
-        item.owner,
-        'ITEM_CLAIMED',
-        `${req.user.fullName || req.user.username} has claimed your item: ${item.title}`,
-        request._id,
-        'Request'
+    const updatedItem = await Item.findOneAndUpdate(
+        filter,
+        {
+            $push: { claimedBy: claimEntry }
+        },
+        { new: true }
     );
 
+    // If atomic update returned null, diagnose exact invariant failure to report accurate 400
+    if (!updatedItem) {
+        const existing = await Item.findById(itemId);
+        if (!existing) {
+            throw new ApiError(404, "Item not found");
+        }
+        if (existing.owner.toString() === userId.toString()) {
+            throw new ApiError(400, "You cannot claim your own item");
+        }
+        if (!existing.instantClaim) {
+            throw new ApiError(400, "This item does not support instant claim");
+        }
+        if (existing.mode !== 'GIVE') {
+            throw new ApiError(400, "Instant claim is only available for free items");
+        }
+        if (!existing.isAvailable) {
+            throw new ApiError(400, "Item is no longer available");
+        }
+        const userClaim = existing.claimedBy.find(
+            c => c.user.toString() === userId.toString() && c.status !== 'CANCELLED'
+        );
+        if (userClaim) {
+            throw new ApiError(400, "You have already claimed this item");
+        }
+        const activeCount = existing.claimedBy.filter(c => c.status === 'PENDING_PICKUP').length;
+        if (activeCount >= existing.maxClaimers) {
+            throw new ApiError(400, "Maximum claimers reached for this item");
+        }
+        throw new ApiError(400, "Item claim failed concurrent capacity check");
+    }
+
+    // Check if max capacity is reached and atomically flag isAvailable = false
+    const activeClaims = updatedItem.claimedBy.filter(c => c.status === 'PENDING_PICKUP').length;
+    if (activeClaims >= updatedItem.maxClaimers) {
+        await Item.updateOne(
+            { _id: itemId, isAvailable: true },
+            { $set: { isAvailable: false } }
+        );
+        updatedItem.isAvailable = false;
+    }
+
+    // Create the Request document with compensating rollback to prevent orphaned claims
+    let request;
+    try {
+        request = await Request.create({
+            item: itemId,
+            requester: userId,
+            owner: updatedItem.owner,
+            description: 'Instant claim for free item',
+            requestType: 'INSTANT_CLAIM',
+            status: 'ACCEPTED',
+            priority: activeClaims
+        });
+    } catch (createErr) {
+        // Compensating rollback: atomic pull to restore database consistency
+        await Item.updateOne(
+            { _id: itemId },
+            {
+                $pull: {
+                    claimedBy: {
+                        user: userId,
+                        status: 'PENDING_PICKUP'
+                    }
+                },
+                $set: { isAvailable: true }
+            }
+        );
+        throw new ApiError(500, `Claim reservation succeeded but request generation failed: ${createErr.message}`);
+    }
+
+    // Non-fatal notification delivery (notification failure should never fail an accepted claim)
+    try {
+        await createNotificationHelper(
+            updatedItem.owner,
+            'ITEM_CLAIMED',
+            `${req.user.fullName || req.user.username} has claimed your item: ${updatedItem.title}`,
+            request._id,
+            'Request'
+        );
+    } catch (notifErr) {
+        console.error("Non-fatal: notification failed during instantClaim:", notifErr.message);
+    }
+
     return res.status(200).json(
-        new ApiResponse(200, { item, request }, "ITEM CLAIMED SUCCESSFULLY")
+        new ApiResponse(200, { item: updatedItem, request }, "ITEM CLAIMED SUCCESSFULLY")
     );
 });
 
@@ -414,24 +490,25 @@ const confirmPickup = asyncHandler(async (req, res) => {
     await request.save();
 
     if (request.item && request.requestType === 'INSTANT_CLAIM') {
-        const item = await Item.findById(request.item._id);
-        const claimIndex = item.claimedBy.findIndex(
-            c => c.user.toString() === request.requester.toString()
+        const itemId = request.item._id || request.item;
+        await Item.updateOne(
+            { _id: itemId, "claimedBy.user": request.requester, "claimedBy.status": "PENDING_PICKUP" },
+            { $set: { "claimedBy.$.status": "COMPLETED" } }
         );
-        if (claimIndex !== -1) {
-            item.claimedBy[claimIndex].status = 'COMPLETED';
-            await item.save();
-        }
     }
 
-    const notifyUser = isOwner ? request.requester : request.owner;
-    await createNotificationHelper(
-        notifyUser,
-        'PICKUP_CONFIRMED',
-        `Pickup confirmed for "${request.item.title}"`,
-        request._id,
-        'Request'
-    );
+    try {
+        const notifyUser = isOwner ? request.requester : request.owner;
+        await createNotificationHelper(
+            notifyUser,
+            'PICKUP_CONFIRMED',
+            `Pickup confirmed for "${request.item.title}"`,
+            request._id,
+            'Request'
+        );
+    } catch (notifErr) {
+        console.error("Non-fatal: notification failed during confirmPickup:", notifErr.message);
+    }
 
     return res.status(200).json(
         new ApiResponse(200, request, "PICKUP CONFIRMED SUCCESSFULLY")
@@ -709,18 +786,28 @@ const updateClaimStatus = asyncHandler(async (req, res) => {
     }
 
     claim.status = status;
-    if (status === 'COMPLETED') {
+    const remainingActive = item.claimedBy.filter(c => c.status === 'PENDING_PICKUP' && c._id.toString() !== claimId.toString()).length;
+
+    if (status === 'CANCELLED') {
+        if (remainingActive < item.maxClaimers) {
+            item.isAvailable = true;
+        }
+    } else if (status === 'COMPLETED' || remainingActive + 1 >= item.maxClaimers) {
         item.isAvailable = false;
     }
     await item.save();
 
-    await createNotificationHelper(
-        claim.user,
-        'CLAIM_STATUS_UPDATED',
-        `Your claim for "${item.title}" status changed to ${status}`,
-        item._id,
-        'Item'
-    );
+    try {
+        await createNotificationHelper(
+            claim.user,
+            'CLAIM_STATUS_UPDATED',
+            `Your claim for "${item.title}" status changed to ${status}`,
+            item._id,
+            'Item'
+        );
+    } catch (notifErr) {
+        console.error("Non-fatal: notification failed during updateClaimStatus:", notifErr.message);
+    }
 
     return res.status(200).json(
         new ApiResponse(200, claim, "CLAIM STATUS UPDATED SUCCESSFULLY")

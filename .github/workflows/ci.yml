@@ -51,10 +51,12 @@ jobs:
           node --check src/utils/email.js
           node --check src/utils/cloudinary.js
           node --check src/middlewares/auth.middleware.js
+          node --check src/middlewares/validate.middleware.js
 
-      - name: Run 55-Endpoint Integration Test Suite
+      - name: Run Integration & Concurrency Test Suites
         env:
           TEST_PORT: 8008
+          TEST_PORT_CONCURRENCY: 8009
           MONGODB_URI: mongodb://127.0.0.1:27017/sharenet_ci_test
           ACCESS_TOKEN_SECRET: ci_access_token_secret_xyz789
           ACCESS_TOKEN_EXPIRY: 1d
