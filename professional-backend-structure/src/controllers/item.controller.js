@@ -167,7 +167,11 @@ const getAllItems = asyncHandler(async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const filter = { isAvailable: true, collegeDomain: req.user.collegeDomain };
+    const collegeDomain = req.user?.collegeDomain || req.query.collegeDomain;
+    const filter = { isAvailable: true };
+    if (collegeDomain) {
+        filter.collegeDomain = collegeDomain;
+    }
 
     if (category) {
         filter.category = category;

@@ -40,18 +40,10 @@ const requestSchema = new Schema(
             default: 'STANDARD'
         },
         proposedPrice: Number,
-        proposedDuration: {
-            startDate: Date,
-            endDate: Date,
-            days: Number
-        },
+        proposedDuration: Schema.Types.Mixed,
         counterOffer: {
             price: Number,
-            duration: {
-                startDate: Date,
-                endDate: Date,
-                days: Number
-            },
+            duration: Schema.Types.Mixed,
             message: String,
             proposedBy: { type: Schema.Types.ObjectId, ref: 'User' },
             status: {

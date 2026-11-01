@@ -1,3 +1,4 @@
+import { emitNotification } from '../socket.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
@@ -35,6 +36,11 @@ const createNotificationHelper = async (userId, type, message, relatedId = null,
         }
 
         const notification = await Notification.create(notificationData);
+        try {
+            emitNotification(userId, notification);
+        } catch (emitErr) {
+            console.error('Socket notification emit failed:', emitErr);
+        }
         return notification;
     } catch (error) {
         console.error('Error creating notification:', error);

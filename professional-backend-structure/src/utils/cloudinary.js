@@ -3,12 +3,7 @@ import fs from "fs"
 import { ApiError } from "./ApiError.js"
 import dotenv from 'dotenv'
 
-dotenv.config(
-    {
-        path: '\.env'
-    }
-
-)
+dotenv.config({ path: '.env' });
 
 // Configuration
 cloudinary.config({
@@ -19,17 +14,15 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (localFilePath) => {
     try {
-        if (!localFilePath) return new ApiError(
-            401,
-            "localfilePath not found"
-        )
+        if (!localFilePath) return null;
 
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type: 'auto'
         })
         //file successfully uploaded
-        // console.log('file is uploaded on cloudinary', response.url);
-        fs.unlinkSync(localFilePath) 
+        if (fs.existsSync(localFilePath)) {
+            fs.unlinkSync(localFilePath);
+        }
 
         return response;
 
@@ -46,14 +39,3 @@ const uploadOnCloudinary = async (localFilePath) => {
 }
 
 export { uploadOnCloudinary }
-
-// Upload an image
-// const uploadResult = await cloudinary.uploader
-//     .upload(
-//         'https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg', {
-//         public_id: 'shoes',
-//     }
-//     )
-//     .catch((error) => {
-//         console.log(error);
-//     });

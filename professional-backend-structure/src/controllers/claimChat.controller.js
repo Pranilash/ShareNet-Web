@@ -424,6 +424,77 @@ const proposeMeetupInChat = asyncHandler(async (req, res) => {
     );
 });
 
+const respondToMeetupInChat = asyncHandler(async (req, res) => {
+    const { chatId } = req.params;
+    const { messageId, accept } = req.body;
+    const userId = req.user._id;
+
+    if (!messageId || accept === undefined) {
+        throw new ApiError(400, "Message ID and acceptance status are required");
+    }
+
+    const chat = await ClaimChat.findById(chatId);
+    if (!chat) {
+        throw new ApiError(404, "Chat not found");
+    }
+
+    const isParticipant = chat.participants.some(
+        p => p.toString() === userId.toString()
+    );
+    if (!isParticipant) {
+        throw new ApiError(403, "You are not a participant of this chat");
+    }
+
+    const message = await ClaimMessage.findOne({ _id: messageId, chat: chatId });
+    if (!message) {
+        throw new ApiError(404, "Message not found");
+    }
+
+    if (message.messageType !== 'MEETUP_PROPOSAL') {
+        throw new ApiError(400, "Message is not a meetup proposal");
+    }
+
+    message.meetupStatus = accept ? 'ACCEPTED' : 'DECLINED';
+    await message.save();
+
+    const statusText = accept ? 'accepted' : 'declined';
+    const systemMessage = await ClaimMessage.create({
+        chat: chatId,
+        sender: userId,
+        content: `${req.user.fullName} ${statusText} the meetup proposal.`,
+        messageType: 'SYSTEM',
+        readBy: [{ user: userId, readAt: new Date() }]
+    });
+
+    chat.lastMessage = {
+        content: `${req.user.fullName} ${statusText} the meetup proposal.`,
+        sender: userId,
+        timestamp: new Date()
+    };
+    await chat.save();
+
+    const populatedMessage = await ClaimMessage.findById(message._id)
+        .populate('sender', 'fullName username avatar');
+    const populatedSystem = await ClaimMessage.findById(systemMessage._id)
+        .populate('sender', 'fullName username avatar');
+
+    try {
+        const io = getIO();
+        io.to(`claim-chat:${chatId}`).emit('meetup-response', {
+            messageId: message._id,
+            status: message.meetupStatus,
+            message: populatedMessage
+        });
+        io.to(`claim-chat:${chatId}`).emit('new-claim-message', populatedSystem);
+    } catch (error) {
+        console.error('Socket emit error:', error);
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, populatedMessage, `Meetup proposal ${statusText}`)
+    );
+});
+
 export {
     getChatForClaim,
     getMessages,
@@ -431,5 +502,6 @@ export {
     markAsRead,
     getMyChats,
     sendLocationMessage,
-    proposeMeetupInChat
+    proposeMeetupInChat,
+    respondToMeetupInChat
 };

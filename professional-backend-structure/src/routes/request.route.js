@@ -14,7 +14,8 @@ import {
     respondToCounterOffer,
     getItemRequests,
     proposePickupDetails,
-    confirmPickupDetails
+    confirmPickupDetails,
+    updateClaimStatus
 } from "../controllers/request.controller.js";
 import { VerifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -32,13 +33,18 @@ router.route("/:requestId/cancel").post(cancelRequest);
 
 router.post("/instant-claim/:itemId", instantClaim);
 router.get("/claim-queue/:itemId", getClaimQueue);
+router.patch("/claims/:claimId/status", updateClaimStatus);
 
+// Pickup routes with aliases for frontend compatibility
 router.patch("/:requestId/confirm-pickup", confirmPickup);
-router.post("/:requestId/pickup-details", proposePickupDetails);
-router.patch("/:requestId/confirm-pickup-details", confirmPickupDetails);
+router.route("/:requestId/pickup-details").post(proposePickupDetails);
+router.route("/:requestId/pickup").post(proposePickupDetails);
+router.route("/:requestId/confirm-pickup-details").patch(confirmPickupDetails).post(confirmPickupDetails);
+router.route("/:requestId/pickup/confirm").post(confirmPickupDetails).patch(confirmPickupDetails);
 
+// Counter offer routes supporting both POST and PATCH
 router.post("/:requestId/counter-offer", createCounterOffer);
-router.patch("/:requestId/counter-offer/respond", respondToCounterOffer);
+router.route("/:requestId/counter-offer/respond").patch(respondToCounterOffer).post(respondToCounterOffer);
 
 router.get("/item/:itemId", getItemRequests);
 

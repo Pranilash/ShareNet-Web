@@ -35,6 +35,7 @@ export const initializeSocket = (server) => {
 
     io.on("connection", (socket) => {
         console.log(`User connected: ${socket.userId}`);
+        socket.join(`user:${socket.userId}`);
 
         // Join transaction room
         socket.on("join-transaction", async (transactionId) => {

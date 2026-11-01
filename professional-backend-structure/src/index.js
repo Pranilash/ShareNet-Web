@@ -1,11 +1,9 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import { createServer } from 'http';
 import { connectDB } from "./db/index.js";
 import { app } from './app.js';
 import { initializeSocket } from './socket.js';
 import { startReminderScheduler } from './services/reminder.service.js';
-
-dotenv.config({ path: '.env' });
 
 const server = createServer(app);
 
